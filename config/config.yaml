@@ -1,0 +1,68 @@
+#
+---
+api_version: '1.0'
+change_date: '2018-10-10'
+beacon_id: 'progenetix-beacon'
+description: |
+  A forward looking implementation for Beacon+ development, with focus on structural variants and metadata.
+provider:
+  - 'Michael Baudis'
+  - 'Theoretical Cytogenetics and Oncogenomics, Department of Molecular Life Sciences, University of Zurich'
+  - 'http://www.imls.uzh.ch/en/research/baudis.html'
+  - 'http://info.baudisgroup.org/'
+  - 'Swiss Institute of Bioinformatics - SIB'
+  - 'http://www.sib.swiss/baudis-michael'
+dataset_names:
+  - arraymap
+  - progenetix
+  - tcga
+  - dipg
+collection_names:
+  callset_collection: callsets
+  variant_collection: variants
+  biosample_collection: biosamples
+  individual_collection: individuals
+  biosubset_collection: biosubsets
+handover_types:
+  cnvhistogram:
+    id: 'pgx:handover:cnvhistogram'
+    label: "CNV Histogram"
+    description: "create a CNV histogram from matched callsets"
+    handover_method: 'callsets::_id'
+  biosamplesdata:
+    id: 'pgx:handover:biosamplesdata'
+    label: "Biosamples"
+    description: "retrieve data of the biosamples matched by the query"
+    handover_method: 'biosamples::_id'
+  individualsdata:
+    id: 'pgx:handover:individualsdata'
+    label: "Individuals"
+    description: "retrieve data of the individuals matched by the query"
+    handover_method: 'individuals::_id'
+  variantsdata:
+    id: 'pgx:handover:variantsdata'
+    label: "Variants"
+    description: "retrieve data of the variants matched by the query"
+    handover_method: 'variants::_id'
+  callsetsvariants:
+    id: 'pgx:handover:callsetsvariants'
+    label: "Callsets Variants"
+    description: "export all variants of matched callsets - potentially huge dataset..."
+    handover_method: 'callsets::_id'
+  progenetixtools:
+    id: 'pgx:handover:progenetixtools'
+    label: "Progenetix Interface"
+    description: "hand the data over to the Progenetix interface for visualization and additional information"
+    handover_method: 'callsets::_id'
+    script_path_web: '/cgi-bin/pgx_process.cgi'
+genome_assemblies:
+  - 'GRCh38'
+url: 'https://beacon.progenetix.org/beacon/info/'
+url_base: 'https://beacon.progenetix.org'
+url_alt: 'https://beacon.arraymap.org/beacon/info/'
+url_logo: 'https://progenetix.org/p/progenetix.png'
+actions:
+  - handover
+handover_db: progenetix
+handover_coll: querybuffer
+max_distinct_variants: 20
