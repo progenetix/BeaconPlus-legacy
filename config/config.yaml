@@ -17,6 +17,22 @@ dataset_names:
   - progenetix
   - tcga
   - dipg
+technology_keys:
+  - ccgh
+  - acgh
+  - wes
+  - wgs
+geo_keys:
+  - city
+  - country
+  - continent
+  - latitude
+  - longitude
+technology_labels:
+  ccgh: 'Chromosomal CGH'
+  acgh: 'Genomic Array'
+  wes: 'Whole Exome Sequencing'
+  wgs: 'Whole Genome Sequencing'
 collection_names:
   callset_collection: callsets
   variant_collection: variants

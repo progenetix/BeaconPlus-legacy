@@ -93,7 +93,7 @@ biosamples:
         - 'biosamples-biocharacteristics-type-id'
         - 'biocharacteristics.type.id'
         - 'biocharacteristics-type-id'
-      pattern: '^(\w+[\:$])?\w*?\d(?:[\w\-\.]+?)?'
+      pattern: '^(\w+[\:\-$])?\w*?\d(?:[\w\-\.]+?)?'
       type: array
     external_references.type.id:
       paramkey: 'biosamples.external_references.type.id'
@@ -101,7 +101,7 @@ biosamples:
         - 'biosamples-external_references-type-id'
         - 'external_references.type.id'
         - 'external_references-type-id'
-      pattern: '^(\w+[\:$])?\w.?(?:[\w\-\.]+?)?'
+      pattern: '^(\w+[\:\-$])?\w.?(?:[\w\-\.]+?)?'
       type: array
     provenance.material.type.id:
       paramkey: 'biosamples.provenance.material.type.id'
@@ -112,6 +112,16 @@ biosamples:
         - 'provenance.material.type.id'
       pattern: '^EFO\:000965[456]$'
       type: string
+    city:
+      paramkey: 'biosamples.provenance.geo.city'
+      dbkey: 'provenance.geo.city'
+      alias:
+        - 'biosamples-provenance-geo-city'
+        - 'biosamples.provenance.geo.city'
+        - 'provenance.geo.city'
+        - 'provenance-geo-city'
+      pattern: '^\w+[\w\- ]+?$'
+      type: array      
 
 biosubsets:
   scope: biosubsets
@@ -124,7 +134,7 @@ biosubsets:
         - 'biosubsets.biocharacteristics.type.id'
         - 'biocharacteristics.type.id'
         - 'biocharacteristics-type-id'
-      pattern: '^\w+[\:$]?(?:[\w\-\.]+?\+?)?'
+      pattern: '^\w+[\:\-$]?(?:[\w\-\.]+?\+?)?'
       type: array
 
 datacollections:
@@ -138,8 +148,18 @@ datacollections:
         - 'datacollections.external_references.type.id'
         - 'external_references.type.id'
         - 'external_references-type-id'
-      pattern: '^\w+[\:$]?(?:[\w\-\.]+?)?'
+      pattern: '^\w+[\:\-$]?(?:[\w\-\.]+?)?'
       type: array
+    city:
+      paramkey: 'provenance.geo.city'
+      dbkey: 'provenance.geo.city'
+      alias:
+        - 'datacollections-provenance-geo-city'
+        - 'datacollections.provenance.geo.city'
+        - 'provenance.geo.city'
+        - 'provenance-geo-city'
+      pattern: '^\w+[\w\- ]+?$'
+      type: array      
 
 filters:
   scope: filters

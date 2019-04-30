@@ -106,8 +106,6 @@ with the conventions of:
     my @qvalues =   $query->{cgi}->param($qkey);
     if ($qkey =~ /\w/ && grep{ /./ }  @qvalues) {
       foreach my $val (grep{ /./} split(',', join(',', @qvalues))) {
-# TODO: better fix ...
-       if (grep{ $qkey =~ /$_/ } qw(start end)) { $val =~ s/[^\d]//g }
         push(@{ $query->{param}->{$qkey} }, $val);
       }    
     } 
@@ -133,6 +131,7 @@ sub get_filters {
        foreach my $val (@{ $query->{param}->{$alias} }) {
          if ($thisP->{$q_param}->{type} =~/(?:num)|(?:int)|(?:float)/i) {
             $val  =~  tr/[^\d\.\-]//;
+       			if (grep{ $q_param =~ /$_/ } qw(start end)) { $val =~ s/[^\d]//g }
             $val  *=  1 }
           if ($val =~ /./) {
             if ($val =~ /$thisP->{$q_param}->{pattern}/) {
@@ -145,13 +144,7 @@ sub get_filters {
                 $query->{parameters}->{$scope}->{$dbK}  =   $val;    
                 if ($scope =~ /variants/) {
                   $query->{pretty_params}->{$q_param}   =   $val }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+  }}}}}}}
 
   return $query;
 
@@ -168,26 +161,6 @@ sub norm_variant_params {
   # for start or end, respectively
   my @rangeVals =   ();
   
-  # for lazy querying, when only outer macthes are provided
-  if (
-    $query->{parameters}->{variants}->{start_min} =~ /^\d+?$/
-    &&
-    $query->{parameters}->{variants}->{end_max} =~ /^\d+?$/
-    &&
-    $query->{parameters}->{variants}->{start_max} !~ /^\d+?$/
-  ) {
-    $query->{parameters}->{variants}->{start_max} =   $query->{parameters}->{variants}->{end_max};
-  }
-  if (
-    $query->{parameters}->{variants}->{start_min} =~ /^\d+?$/
-    &&
-    $query->{parameters}->{variants}->{end_max} =~ /^\d+?$/
-    &&
-    $query->{parameters}->{variants}->{end_min} !~ /^\d+?$/
-  ) {
-    $query->{parameters}->{variants}->{end_min} =   $query->{parameters}->{variants}->{start_min};
-  }
-  
   foreach my $side (qw(start end)) {
     my $parKeys =   [ grep{ /^$side(?:_m(?:(?:in)|(?:ax)))?$/ } keys %{ $query->{parameters}->{variants} } ];
     my @parVals =   grep{ /^\d+?$/ } @{ $query->{parameters}->{variants} }{ @$parKeys };
@@ -195,6 +168,7 @@ sub norm_variant_params {
     $query->{parameters}->{variants}->{$side.'_range'}  =  [ $parVals[0], $parVals[-1] ];
     push(@rangeVals, $parVals[0], $parVals[-1]);
   }
+  
   @rangeVals    =  sort {$a <=> $b} grep{  /^\d+?$/ } @rangeVals;
   $query->{parameters}->{variants}->{pos_range} =   [ $rangeVals[0], $rangeVals[-1] ];
 
@@ -419,6 +393,5 @@ sub create_datacollection_query {
   return $query;
 
 }
-
 
 1;
