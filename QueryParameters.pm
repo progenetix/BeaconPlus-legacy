@@ -7,13 +7,12 @@ require Exporter;
 @EXPORT =   qw(
   new
   read_param_config
-  get_filters
+  map_scoped_params
   get_variant_params
   norm_variant_params
   check_variant_params
   create_variant_query
-  create_biosample_query
-  create_subset_query
+  create_subsets_queries
 );
 
 
@@ -48,13 +47,13 @@ sub new {
 #  $self->read_beacon_specs();
   $self->read_param_config();
   $self->deparse_query_string();
-  $self->get_filters();
+  $self->scope_filters();
+  $self->map_scoped_params();
   $self->norm_variant_params();
   $self->check_variant_params();
   $self->create_variant_query();
-  $self->create_biosample_query();
-  $self->create_biosubset_query();
-  $self->create_datacollection_query();
+  $self->create_sample_queries();
+  $self->create_subsets_queries();
 
   return $self;
 
@@ -115,20 +114,42 @@ with the conventions of:
 
 }
 
+
+
 ################################################################################
 
-sub get_filters {
+sub scope_filters {
 
   my $query     =   shift;
 
-  foreach my $scope (keys %{ $query->{config} }) {
+  foreach my $filterV	(@{ $query->{param}->{filters} }) {
+  	foreach my $pre	(keys %{ $query->{config}->{filter_prefix_mappings} }) {
+  		if ($filterV	=~ 	/^$pre(\:|\-|$)/) {
+				if ($query->{config}->{filter_prefix_mappings}->{$pre}->{remove_prefix}) {
+					$filterV	=~	s/^$pre(\:|\-)?// }
+  			push(
+  				@{ $query->{param}->{ $query->{config}->{filter_prefix_mappings}->{$pre}->{parameter} } },
+  				$filterV
+  			);
+  }}}
 
-    my $thisP   =   $query->{config}->{$scope}->{parameters};
-    
+  return $query;
+
+}
+
+################################################################################
+
+sub map_scoped_params {
+
+  my $query     =   shift;
+  
+  foreach my $scope (keys %{ $query->{config}->{scopes} }) {
+    my $thisP   =   $query->{config}->{scopes}->{$scope}->{parameters};
+   
     foreach my $q_param (grep{ /\w/ } keys %{ $thisP }) {
       my $dbK   =   $thisP->{$q_param}->{dbkey} =~ /\w/ ? $thisP->{$q_param}->{dbkey} : $q_param;
-      foreach my $alias ($q_param, $thisP->{$q_param}->{paramkey}, @{ $thisP->{$q_param}->{alias} }) {
-       foreach my $val (@{ $query->{param}->{$alias} }) {
+      foreach my $alias ($q_param, $thisP->{$q_param}->{paramkey}, $thisP->{$q_param}->{dbkey}, @{ $thisP->{$q_param}->{alias} }) {
+      foreach my $val (@{ $query->{param}->{$alias} }) {
          if ($thisP->{$q_param}->{type} =~/(?:num)|(?:int)|(?:float)/i) {
             $val  =~  tr/[^\d\.\-]//;
        			if (grep{ $q_param =~ /$_/ } qw(start end)) { $val =~ s/[^\d]//g }
@@ -306,24 +327,31 @@ sub create_precise_query {
 
 ################################################################################
 
-sub create_biosample_query {
+sub create_sample_queries {
 
 =pod
 Queries with multiple options for the same attribute are treated as logical "OR".
 =cut
 
   my $query     =   shift;
-  my @qList;
+  
+  foreach my $scope (qw(biosamples callsets)) {
 
-  foreach my $qKey (keys %{ $query->{parameters}->{biosamples} }) {
-    my @thisQlist;
-    if (ref $query->{parameters}->{biosamples}->{$qKey} eq 'ARRAY') {
-      foreach (@{ $query->{parameters}->{biosamples}->{$qKey} }) { push(@thisQlist, { $qKey => qr/(?:pgx\:)?$_/i }) } }
-    else {
-      push(@thisQlist, { $qKey => qr/^$query->{parameters}->{biosamples}->{$qKey}/i }) }  # FIX pgx:
-    if (@thisQlist == 1)    { push(@qList, $thisQlist[0]) }
-    elsif (@thisQlist > 1)  { push(@qList, {'$or' => [ @thisQlist ] } ) }
-  }
+		my @qList;
+
+		foreach my $qKey (keys %{ $query->{parameters}->{$scope} }) {
+			my %thisQlist;
+			if (ref $query->{parameters}->{$scope}->{$qKey} eq 'ARRAY') {
+				foreach (@{ $query->{parameters}->{$scope}->{$qKey} }) {
+					$thisQlist{ $qKey.'::'.$_ }	=		{ $qKey => qr/^$_/i };
+				}      	
+			}
+			else {
+				$thisQlist{ $qKey.'::'.$query->{parameters}->{$scope}->{$qKey} }	= { $qKey => qr/^$query->{parameters}->{$scope}->{$qKey}/i } }
+
+			if (scalar keys %thisQlist == 1)    { push(@qList, (values %thisQlist)[0]) }
+			elsif (scalar keys %thisQlist > 1)  { push(@qList, {'$or' => [ values %thisQlist ] } ) }
+		}
 
 =pod
 
@@ -335,63 +363,60 @@ The construction of the query object depends on the detected parameters:
 
 =cut
 
-  if (@qList == 1)    { $query->{queries}->{biosamples} =   $qList[0] }
-  elsif (@qList > 1)  { $query->{queries}->{biosamples} =   { '$and' => \@qList } }
+		if (@qList == 1)    { $query->{queries}->{$scope} =   $qList[0] }
+		elsif (@qList > 1)  { $query->{queries}->{$scope} =   { '$and' => \@qList } }
 
+	}
+	
   return $query;
 
 }
 
 ################################################################################
 
-sub create_biosubset_query {
+sub create_subsets_queries {
 
   my $query     =   shift;
-  my @qList;
-#print Dumper($query->{parameters}->{biosubsets}).'<hr/>';
 
-  foreach my $qKey (keys %{ $query->{parameters}->{biosubsets} }) {
-    my @thisQlist;
-#print Dumper($_);
+  foreach my $scope (qw(biosubsets datacollections publications)) {
+		my @qList;
 
-    if (ref $query->{parameters}->{biosubsets}->{$qKey} eq 'ARRAY') {
-      foreach (@{ $query->{parameters}->{biosubsets}->{$qKey} }) { push(@thisQlist, { $qKey => qr/^$_/i }) } }
-    else {
-      push(@thisQlist, { $qKey => qr/^(pgx\:)?$query->{parameters}->{biosubsets}->{$qKey}/i }) }  # FIX pgx:
-    if (@thisQlist == 1)    { push(@qList, $thisQlist[0]) }
-    elsif (@thisQlist > 1)  { push(@qList, {'$or' => [ @thisQlist ] } ) }
-  }
+		foreach my $qKey (keys %{ $query->{parameters}->{$scope} }) {
+			my @thisQlist;
 
-  if (@qList == 1)    { $query->{queries}->{biosubsets} =   $qList[0] }
-  elsif (@qList > 1)  { $query->{queries}->{biosubsets} =   { '$and' => \@qList } }
+			if (ref $query->{parameters}->{$scope}->{$qKey} eq 'ARRAY') {
+				foreach (@{ $query->{parameters}->{$scope}->{$qKey} }) { push(@thisQlist, { $qKey => qr/^$_/i }) } }
+			else {
+			
+				my $val	=		$query->{parameters}->{$scope}->{$qKey};
+				
+				if ($val =~ /^(<|>\=?)(\d+?(\.\d+?)?)$/) {
+					my ($rel, $num)	=		($1, 1 * $2);
+					if ($rel eq '>') {
+						push(@thisQlist, { $qKey => { '$gt' => $num } } ) }
+					if ($rel eq '<') {
+						push(@thisQlist, { $qKey => { '$lt' => $num } } ) }
+					if ($rel eq '>=') {
+						push(@thisQlist, { $qKey => { '$gte' => $num } } ) }
+					if ($rel eq '<=') {
+						push(@thisQlist, { $qKey => { '$lte' => $num } } ) }					
+				} else {
+					push(@thisQlist, { $qKey => qr/^$val/i } ) }
+			}
 
+			if (@thisQlist == 1)    { push(@qList, $thisQlist[0]) }
+			elsif (@thisQlist > 1)  { push(@qList, {'$or' => [ @thisQlist ] } ) }
+		}
+
+		if (@qList == 1)    { $query->{queries}->{$scope} =   $qList[0] }
+		elsif (@qList > 1)  { $query->{queries}->{$scope} =   { '$and' => \@qList } }
+
+	}
+	
   return $query;
 
 }
 
 ################################################################################
-
-sub create_datacollection_query {
-
-  my $query     =   shift;
-  my @qList;
-
-  foreach my $qKey (keys %{ $query->{parameters}->{datacollections} }) {
-    my @thisQlist;
-
-    if (ref $query->{parameters}->{datacollections}->{$qKey} eq 'ARRAY') {
-      foreach (@{ $query->{parameters}->{datacollections}->{$qKey} }) { push(@thisQlist, { $qKey => qr/^$_/i }) } }
-    else {
-      push(@thisQlist, { $qKey => qr/^$query->{parameters}->{datacollections}->{$qKey}/i }) }  # FIX pgx:
-    if (@thisQlist == 1)    { push(@qList, $thisQlist[0]) }
-    elsif (@thisQlist > 1)  { push(@qList, {'$or' => [ @thisQlist ] } ) }
-  }
-
-  if (@qList == 1)    { $query->{queries}->{datacollections} =   $qList[0] }
-  elsif (@qList > 1)  { $query->{queries}->{datacollections} =   { '$and' => \@qList } }
-
-  return $query;
-
-}
 
 1;

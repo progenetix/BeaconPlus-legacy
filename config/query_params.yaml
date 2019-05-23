@@ -1,173 +1,283 @@
 ---
-variants:
-  scope: variants
-  parameters:
-    referenceName:
-      paramkey: 'variants.reference_name'
-      dbkey: reference_name
-      alias:
-        - reference_name
-      pattern: '^\w+?$'
-    mateName:
-      paramkey: 'variants.mate_name'
-      dbkey: mate_name
-      alias:
-        - mate_name
-      pattern: '^\w+?$'
-    referenceBases:
-      paramkey: 'variants.reference_bases'
-      dbkey: reference_bases
-      alias:
-        - reference_bases
-      pattern: '^[\w\*]+?$'
-    alternateBases:
-      paramkey: 'variants.alternate_bases'
-      dbkey: alternate_bases
-      alias:
-        - alternate_bases
-      pattern: '^\w+?$'
-    variantType:
-      paramkey: 'variants.variant_type'
-      dbkey: variant_type
-      alias:
-        - variant_type
-      pattern: '^\w+?$'
-    start:
-      paramkey: 'variants.start'
-      dbkey: start
-      alias:
-        - start
-      pattern: '^\d+?$'
-      type: integer
-    end:
-      paramkey: 'variants.end'
-      dbkey: end
-      alias:
-        - end
-      pattern: '^\d+?$'
-      type: integer
-    startMin:
-      paramkey: 'variants.start_min'
-      dbkey: start_min
-      alias:
-        - start_min
-      pattern: '^\d+?$'
-      type: integer
-    startMax:
-      paramkey: 'variants.start_max'
-      dbkey: start_max
-      alias:
-        - start_max
-      pattern: '^\d+?$'
-      type: integer
-    endMin:
-      paramkey: 'variants.end_min'
-      dbkey: end_min
-      alias:
-        - end_min
-      pattern: '^\d+?$'
-      type: integer
-    endMax:
-      paramkey: 'variants.end_max'
-      dbkey: end_max
-      alias:
-        - end_max
-      pattern: '^\d+?$'
-      type: integer
+description: |
+  This file provides configurations for Beacon query related parameters.
+  Parameters are part of different "scopes", which refer to specific (logical 
+  or physical) data collections.
+  The "alias" parameters provide alternative spellings to the parameter names; 
+  this can be helpful when e.g. using dot-annotation which may clash with 
+  interpolations.
+filter_prefix_mappings:
+  icdom:
+    parameter: 'biocharacteristics.type.id'
+  icdot:
+    parameter: 'biocharacteristics.type.id'
+  ncit:
+    parameter: 'biocharacteristics.type.id'
+  HPO:
+    parameter: 'biocharacteristics.type.id'
+  pubmed:
+    parameter: 'external_references.type.id'
+  geo:
+    parameter: 'external_references.type.id'
+  snmi:
+    parameter: 'external_references.type.id'
+  cellosaurus:
+    parameter: 'external_references.type.id'
+  tcga:
+    parameter: 'external_references.type.id'
+  EFO:
+    parameter: 'provenance.material.type.id'
+  wes:
+    parameter: 'counts.wes'
+    remove_prefix: true
+  wgs:
+    parameter: 'counts.wgs'
+    remove_prefix: true
+  ccgh:
+    parameter: 'counts.ccgh'
+    remove_prefix: true
+  acgh:
+    parameter: 'counts.acgh'
+    remove_prefix: true
+scopes:
+  variants:
+    scope: variants
+    parameters:
+      referenceName:
+        paramkey: 'variants.reference_name'
+        dbkey: reference_name
+        alias:
+          - reference_name
+        pattern: '^\w+?$'
+      mateName:
+        paramkey: 'variants.mate_name'
+        dbkey: mate_name
+        alias:
+          - mate_name
+        pattern: '^\w+?$'
+      referenceBases:
+        paramkey: 'variants.reference_bases'
+        dbkey: reference_bases
+        alias:
+          - reference_bases
+        pattern: '^[\w\*]+?$'
+      alternateBases:
+        paramkey: 'variants.alternate_bases'
+        dbkey: alternate_bases
+        alias:
+          - alternate_bases
+        pattern: '^\w+?$'
+      variantType:
+        paramkey: 'variants.variant_type'
+        dbkey: variant_type
+        alias:
+          - variant_type
+        pattern: '^\w+?$'
+      start:
+        paramkey: 'variants.start'
+        dbkey: start
+        alias:
+          - start
+        pattern: '^\d+?$'
+        type: integer
+      end:
+        paramkey: 'variants.end'
+        dbkey: end
+        alias:
+          - end
+        pattern: '^\d+?$'
+        type: integer
+      startMin:
+        paramkey: 'variants.start_min'
+        dbkey: start_min
+        alias:
+          - start_min
+        pattern: '^\d+?$'
+        type: integer
+      startMax:
+        paramkey: 'variants.start_max'
+        dbkey: start_max
+        alias:
+          - start_max
+        pattern: '^\d+?$'
+        type: integer
+      endMin:
+        paramkey: 'variants.end_min'
+        dbkey: end_min
+        alias:
+          - end_min
+        pattern: '^\d+?$'
+        type: integer
+      endMax:
+        paramkey: 'variants.end_max'
+        dbkey: end_max
+        alias:
+          - end_max
+        pattern: '^\d+?$'
+        type: integer
 
-biosamples:
-  scope: biosamples
-  parameters:
-    id:
-      paramkey: 'biosamples.id'
-      dbkey: 'id'
-      alias:
-        - 'biosamples-id'
-        - 'id'
-      pattern: '^.+?\w+?.+?$'
-      type: array
-    biocharacteristics.type.id:
-      paramkey: 'biosamples.biocharacteristics.type.id'
-      dbkey: 'biocharacteristics.type.id'
-      alias:
-        - 'biosamples-biocharacteristics-type-id'
-        - 'biocharacteristics.type.id'
-        - 'biocharacteristics-type-id'
-      pattern: '^(\w+[\:\-$])?\w*?\d(?:[\w\-\.]+?)?'
-      type: array
-    external_references.type.id:
-      paramkey: 'biosamples.external_references.type.id'
-      alias:
-        - 'biosamples-external_references-type-id'
-        - 'external_references.type.id'
-        - 'external_references-type-id'
-      pattern: '^(\w+[\:\-$])?\w.?(?:[\w\-\.]+?)?'
-      type: array
-    provenance.material.type.id:
-      paramkey: 'biosamples.provenance.material.type.id'
-      dbkey: 'provenance.material.type.id'
-      alias:
-        - 'biosamples-provenance-material-type-id'
-        - 'provenance-material-type-id'
-        - 'provenance.material.type.id'
-      pattern: '^EFO\:000965[456]$'
-      type: string
-    city:
-      paramkey: 'biosamples.provenance.geo.city'
-      dbkey: 'provenance.geo.city'
-      alias:
-        - 'biosamples-provenance-geo-city'
-        - 'biosamples.provenance.geo.city'
-        - 'provenance.geo.city'
-        - 'provenance-geo-city'
-      pattern: '^\w+[\w\- ]+?$'
-      type: array      
+  callsets:
+    scope: callsets
+    parameters:
+      id:
+        paramkey: 'callsets.id'
+        dbkey: 'id'
+        alias:
+          - 'callsets-id'
+          - 'id'
+        pattern: '^.+?\w+?.+?$'
+        type: array
 
-biosubsets:
-  scope: biosubsets
-  parameters:
-    id:
-      paramkey: 'biocharacteristics.type.id'
-      dbkey: 'id'
-      alias:
-        - 'biosubsets-biocharacteristics-type-id'
-        - 'biosubsets.biocharacteristics.type.id'
-        - 'biocharacteristics.type.id'
-        - 'biocharacteristics-type-id'
-      pattern: '^\w+[\:\-$]?(?:[\w\-\.]+?\+?)?'
-      type: array
+  biosamples:
+    scope: biosamples
+    parameters:
+      id:
+        paramkey: 'biosamples.id'
+        dbkey: 'id'
+        alias:
+          - 'biosamples-id'
+          - 'id'
+        pattern: '^.+?\w+?.+?$'
+        type: array
+      biocharacteristics.type.id:
+        paramkey: 'biosamples.biocharacteristics.type.id'
+        dbkey: 'biocharacteristics.type.id'
+        alias:
+          - 'biosamples-biocharacteristics-type-id'
+          - 'biocharacteristics.type.id'
+          - 'biocharacteristics-type-id'
+        pattern: '^(\w+[\:\-$])?\w*?\d(?:[\w\-\.]+?)?'
+        type: array
+      external_references.type.id:
+        paramkey: 'biosamples.external_references.type.id'
+        alias:
+          - 'biosamples-external_references-type-id'
+          - 'external_references.type.id'
+          - 'external_references-type-id'
+        pattern: '^(\w+[\:\-$])?\w.?(?:[\w\-\.]+?)?'
+        type: array
+      provenance.material.type.id:
+        paramkey: 'biosamples.provenance.material.type.id'
+        dbkey: 'provenance.material.type.id'
+        alias:
+          - 'biosamples-provenance-material-type-id'
+          - 'provenance-material-type-id'
+          - 'provenance.material.type.id'
+        pattern: '^EFO\:000965[456]$'
+        type: string
+      city:
+        paramkey: 'biosamples.provenance.geo.city'
+        dbkey: 'provenance.geo.city'
+        alias:
+          - 'biosamples-provenance-geo-city'
+          - 'biosamples.provenance.geo.city'
+          - 'provenance.geo.city'
+          - 'provenance-geo-city'
+        pattern: '^\w+[\w\- ]+?$'
+        type: array      
 
-datacollections:
-  scope: datacollections
-  parameters:
-    id:
-      paramkey: 'external_references.type.id'
-      dbkey: 'id'
-      alias:
-        - 'datacollections-external_references-type-id'
-        - 'datacollections.external_references.type.id'
-        - 'external_references.type.id'
-        - 'external_references-type-id'
-      pattern: '^\w+[\:\-$]?(?:[\w\-\.]+?)?'
-      type: array
-    city:
-      paramkey: 'provenance.geo.city'
-      dbkey: 'provenance.geo.city'
-      alias:
-        - 'datacollections-provenance-geo-city'
-        - 'datacollections.provenance.geo.city'
-        - 'provenance.geo.city'
-        - 'provenance-geo-city'
-      pattern: '^\w+[\w\- ]+?$'
-      type: array      
+  biosubsets:
+    scope: biosubsets
+    parameters:
+      id:
+        paramkey: 'biocharacteristics.type.id'
+        dbkey: 'id'
+        alias:
+          - 'biosubsets-biocharacteristics-type-id'
+          - 'biosubsets.biocharacteristics.type.id'
+          - 'biocharacteristics.type.id'
+          - 'biocharacteristics-type-id'
+        pattern: '^\w+[\:\-$]?(?:[\w\-\.]+?\+?)?'
+        type: array
 
-filters:
-  scope: filters
-  parameters:
-    randno:
-      paramkey: 'filters.randno'
-      dbkey: 'randno'               # not really used this way
-      alias:
-        - randno
-      pattern: '^\d+?$'
-      type: integer
+  datacollections:
+    scope: datacollections
+    parameters:
+      id:
+        paramkey: 'external_references.type.id'
+        dbkey: 'id'
+        alias:
+          - 'datacollections-external_references-type-id'
+          - 'datacollections.external_references.type.id'
+          - 'external_references.type.id'
+          - 'external_references-type-id'
+        pattern: '^\w+[\:\-$]?(?:[\w\-\.]+?)?'
+        type: array
+      city:
+        paramkey: 'provenance.geo.city'
+        dbkey: 'provenance.geo.city'
+        alias:
+          - 'datacollections-provenance-geo-city'
+          - 'datacollections.provenance.geo.city'
+          - 'provenance-geo-city'
+        pattern: '^\w+[\w\- ]+?$'
+        type: array      
+
+  publications:
+    scope: publications
+    parameters:
+      id:
+        paramkey: 'id'
+        dbkey: 'id'
+        alias: []
+        pattern: '^\w+[\:\-$]?(?:[\w]+?)?'
+        type: array
+      city:
+        paramkey: 'provenance.geo.city'
+        dbkey: 'provenance.geo.city'
+        alias: []
+        pattern: '^\w+[\w\- ]+?$'
+        type: array
+      cccghcount:
+        paramkey: 'publications.counts.ccgh'
+        dbkey: 'counts.ccgh'
+        alias: []
+        pattern: '^(?:ccgh(?:[\:\-])?)?[><]?\d*?$'
+        type: string
+      acghcount:
+        paramkey: 'publications.counts.acgh'
+        dbkey: 'counts.acgh'
+        pattern: '^(?:acgh(?:[\:\-])?)?[><]?\d*?$'
+        type: string
+      wescount:
+        paramkey: 'publications.counts.wes'
+        dbkey: 'counts.wes'
+        alias: []
+        pattern: '^(?:wes(?:[\:\-])?)?[><]?\d*?$'
+        type: string
+      wgscount:
+        paramkey: 'publications.counts.wgs'
+        dbkey: 'counts.wgs'
+        alias: []
+        pattern: '^(?:wgs(?:[\:\-])?)?[><]?\d*?$'
+        type: string
+      ngscount:
+        paramkey: 'publications.counts.ngs'
+        dbkey: 'counts.ngs'
+        pattern: '^(?:ngs(?:[\:\-])?)?[><]?\d*?$'
+        type: string
+      genomescount:
+        paramkey: 'publications.counts.genomes'
+        dbkey: 'counts.genomes'
+        alias: []
+        pattern: '^(?:genomes(?:[\:\-])?)?[><]?\d*?$'
+        type: string
+
+  filters:
+    scope: filters
+    parameters:
+      randno:
+        paramkey: 'filters.randno'
+        dbkey: 'randno'               # not really used this way
+        alias:
+          - randno
+        pattern: '^\d+?$'
+        type: integer
+      accessid:
+        paramkey: 'handover.filters.accessid'
+        dbkey: 'accessid'
+        alias:
+          - filters-accessid
+        pattern: '^\w[\w\-]+?\w$'
+        type: string
+     

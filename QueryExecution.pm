@@ -25,9 +25,12 @@ sub new {
 
   my $class     =   shift;
   my $config    =   shift;
+  my $dataset   =   shift;
 
   my $self      =   {
     config      =>  $config,
+    dataset			=>	$dataset,
+    db_conn			=>	MongoDB::MongoClient->new()->get_database( $dataset ),
     handover_coll   =>   MongoDB::MongoClient->new()->get_database( $config->{handover_db} )->get_collection( $config->{handover_coll} ),
   };
 
@@ -123,48 +126,80 @@ sub execute_aggregate_query {
 
   my $prefetch  =   shift;
   my $query     =   shift;
-  
+ 
   $prefetch->get_base_counts();
 
   # the main prefetch method here is the retrieval of the 
   # "callsets" collection's "id" values
   my $method    =   'callsets::id';
   
-  if (! grep{ /.../ }
+  if (! grep{ /../ }
     keys %{ $query->{callset_query} },
     keys %{ $query->{queries}->{biosamples} },
-    keys %{ $query->{queries}->{variants} }
+    keys %{ $query->{queries}->{callsets} },
+    keys %{ $query->{queries}->{variants} },
+    $query->{parameters}->{filters}->{accessid}
   ) { return }
 
 # 1. Checking for a callsets query & return iq query but no matches
+	if ($query->{parameters}->{filters}->{accessid} =~ /^\w[\w\-]+?\w$/) {
+		my $h_o 		=		$prefetch->{handover_coll}->find_one( { _id	=>  $query->{parameters}->{filters}->{accessid} } );
+		if ($h_o->{target_collection} eq 'callsets') {
+		
+			my $pre_Q	=		{ $h_o->{target_key } => { '$in' => $h_o->{target_values} } };
+			if (grep{ /.../ } keys %{ $query->{callset_query} } ) {
+				$query->{callset_query}	=		{ '$and' => [
+					$pre_Q,
+					$query->{callset_query}
+				] };	
+			} else {
+				$query->{callset_query}	=		$pre_Q }
+		}	
+	}
 
   if (grep{ /.../ } keys %{ $query->{callset_query} } ) {
     $prefetch->prefetch_data( $method, $query->{callset_query} );
     if ($prefetch->{handover}->{$method}->{target_count} < 1) { 
       return $prefetch } 
   }
+
+  if (grep{ /../ } keys %{ $query->{queries}->{callsets} } ) {
+
+    $prefetch->prefetch_data( $method, $query->{queries}->{callsets} );
+    $prefetch->{counts}->{callsets_query_match_count}  =   $prefetch->{handover}->{$method}->{target_count};
+    if ($prefetch->{handover}->{$method}->{target_count} < 1) { 
+      return $prefetch }
+
+	}
   
 # 2. Checking for a biosamples query & return if query but no matches
 
-  if (grep{ /.../ } keys %{ $query->{queries}->{biosamples} } ) {
+  if (grep{ /../ } keys %{ $query->{queries}->{biosamples} } ) {
+
     my $thisM   =   'biosamples::id';
+
     $prefetch->prefetch_data( $thisM, $query->{queries}->{biosamples} );
+
     $prefetch->{counts}->{biosamples_query_match_count}  =   $prefetch->{handover}->{$thisM}->{target_count};
     if ($prefetch->{handover}->{$thisM}->{target_count} < 1) { 
       return $prefetch }
+
 # 3. If biosamples matches, retrieve the callset_id values; if there had been 
 #    matches before => intersect through added "$in" query
 
     my $thisQ   =   { 'biosample_id' => { '$in' =>  $prefetch->{handover}->{'biosamples::id'}->{target_values} } };
+
     if ($prefetch->{handover}->{$method}->{target_count} > 0) {
-      $thisQ      =   { '$and' =>
+      $thisQ    =   { '$and' =>
         [
           $thisQ,
           { $prefetch->{handover}->{$method}->{target_key} => { '$in' =>  $prefetch->{handover}->{$method}->{target_values} } },
         ],
       };
     }
+
     $prefetch->prefetch_data( $method, $thisQ );
+
     if ($prefetch->{handover}->{$method}->{target_count} < 1) { 
       return $prefetch } 
   }
@@ -172,8 +207,10 @@ sub execute_aggregate_query {
 # 4. Checking for a variants query; if there had been callset matches before
 #    => intersect through added "$in" query; return iq query but no matches
 
-  if (grep{ /.../ } keys %{ $query->{queries}->{variants} } ) {
+  if (grep{ /../ } keys %{ $query->{queries}->{variants} } ) {
+
     my $thisQ   =   $query->{queries}->{variants};
+
     if ($prefetch->{handover}->{$method}->{target_count} > 0) {
 
       $thisQ    =   { '$and' =>
@@ -182,13 +219,15 @@ sub execute_aggregate_query {
            { 'callset_id' => { '$in' =>  $prefetch->{handover}->{$method}->{target_values} } },
         ],
       };
+
     }
+
     $prefetch->create_handover_object( 'variants::_id', $thisQ );
 
     if ($prefetch->{handover}->{'variants::_id'}->{target_count} < 1) { 
       return $prefetch }
 
-    $thisQ      =    { '_id' => { '$in' => $prefetch->{handover}->{'variants::_id'}->{target_values} } };
+    $thisQ      =   { '_id' => { '$in' => $prefetch->{handover}->{'variants::_id'}->{target_values} } };
     $thisM      =   'variants::callset_id';
     $prefetch->prefetch_data( $thisM, $thisQ );
     
@@ -197,7 +236,7 @@ sub execute_aggregate_query {
     $prefetch->{handover}->{$method}->{target_count}  =   $prefetch->{handover}->{$thisM}->{target_count};
 
     # getting the distinct variants
-    $thisQ      =    { '_id' => { '$in' => $prefetch->{handover}->{'variants::_id'}->{target_values} } };
+    $thisQ      =   { '_id' => { '$in' => $prefetch->{handover}->{'variants::_id'}->{target_values} } };
     $thisM      =   'variants::digest';
     $prefetch->prefetch_data( $thisM, $thisQ );
 
@@ -211,7 +250,6 @@ sub execute_aggregate_query {
     'callsets::biosample_id',
     { 'id' => { '$in' => $prefetch->{handover}->{$method}->{target_values} } },
   );
-#print '<hr/>callsets::biosample_id: '.$prefetch->{handover}->{'callsets::biosample_id'}->{target_count};
   
   $prefetch->create_handover_object(
     'biosamples::_id',
@@ -225,8 +263,8 @@ sub execute_aggregate_query {
   foreach (qw(callsets biosamples variants)) {
 
     if ($prefetch->{handover}->{$_.'::_id'}->{target_count}) {
-      $prefetch->{counts}->{$_.'_match_count'} =   $prefetch->{handover}->{$_.'::_id'}->{target_count}; 
-    }
+      $prefetch->{counts}->{$_.'_match_count'} =   $prefetch->{handover}->{$_.'::_id'}->{target_count} }
+
   }
  
   return $prefetch;
