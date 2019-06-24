@@ -2,11 +2,14 @@ package BeaconPlus::QueryParameters;
 
 use Data::Dumper;
 use CGI::Simple;
+use BeaconPlus::ConfigLoader;
+
 require Exporter;
 @ISA    =   qw(Exporter);
 @EXPORT =   qw(
   new
   read_param_config
+  convert_api_request
   map_scoped_params
   get_variant_params
   norm_variant_params
@@ -21,13 +24,6 @@ sub new {
   use File::Basename;
 
 =pod
-
-    callset_params      =>  {},
-    individual_params   =>  {},
-    biosubset_params    =>  {},
-    callset_query       =>  {},
-    individual_query    =>  {},
-    biosubset_query     =>  {},
 
 =cut
 
@@ -44,9 +40,13 @@ sub new {
 
   bless $self, $class;
 
+	if ($self->{cgi}->param(debug) > 0) {
+		print 'Content-type: text/plain'."\n\n" }
+
 #  $self->read_beacon_specs();
   $self->read_param_config();
   $self->deparse_query_string();
+  $self->convert_api_request();
   $self->scope_filters();
   $self->map_scoped_params();
   $self->norm_variant_params();
@@ -54,6 +54,7 @@ sub new {
   $self->create_variant_query();
   $self->create_sample_queries();
   $self->create_subsets_queries();
+  $self->add_handover_query();
 
   return $self;
 
@@ -70,6 +71,7 @@ sub read_beacon_specs {
   return $query;
 
 }
+
 ################################################################################
 
 sub read_param_config {
@@ -77,7 +79,8 @@ sub read_param_config {
   use YAML::XS qw(LoadFile);
 
   my $query     =   shift;
-  $query->{config}    =   LoadFile($query->{here_path}.'/config/query_params.yaml');
+  $query->{config}  =   LoadFile($query->{here_path}.'/config/query_params.yaml');
+  $query->{env}    	=   BeaconPlus::ConfigLoader->new();
   return $query;
 
 }
@@ -114,6 +117,33 @@ with the conventions of:
 
 }
 
+################################################################################
+
+sub convert_api_request {
+  
+=pod
+
+=cut  
+
+  my $query     =   shift;
+  
+  # TODO: in yaml?
+  my @request		=		grep{ /\w/ } split('/', $ENV{REQUEST_URI});
+  
+  if ($request[0] !~ /^api$/i) { return $query }
+  
+	shift @request;	# remove the api part
+	foreach (@{$query->{config}->{api_mappings}}) {
+		$query->{param}->{ $_->{paramkey} }	=		 [ $_->{default} ];
+  	if ($request[0] =~ /^\?/i) 	{ last }	
+  	if ($request[0] !~ /\w/i) 	{	last }	
+		$query->{param}->{ $_->{paramkey} }	=	[ shift @request ];
+
+	} 
+
+  return $query;
+
+}
 
 
 ################################################################################
@@ -145,7 +175,6 @@ sub map_scoped_params {
   
   foreach my $scope (keys %{ $query->{config}->{scopes} }) {
     my $thisP   =   $query->{config}->{scopes}->{$scope}->{parameters};
-   
     foreach my $q_param (grep{ /\w/ } keys %{ $thisP }) {
       my $dbK   =   $thisP->{$q_param}->{dbkey} =~ /\w/ ? $thisP->{$q_param}->{dbkey} : $q_param;
       foreach my $alias ($q_param, $thisP->{$q_param}->{paramkey}, $thisP->{$q_param}->{dbkey}, @{ $thisP->{$q_param}->{alias} }) {
@@ -162,6 +191,7 @@ sub map_scoped_params {
                  push(@{ $query->{pretty_params}->{$q_param} }, $val) }
               }
               else {
+#if ($scope eq 'filters') { print Dumper($scope, $dbK, $val)."<hr/>\n\n"; }   
                 $query->{parameters}->{$scope}->{$dbK}  =   $val;    
                 if ($scope =~ /variants/) {
                   $query->{pretty_params}->{$q_param}   =   $val }
@@ -207,7 +237,7 @@ sub check_variant_params {
   
   # TODO: Use the Beacon specificaion for allowed values
 
-  if ( $query->{parameters}->{variants}->{variant_type} =~ /^(?:UP)|(?:EL)$/ && ( $query->{parameters}->{variants}->{start_range}->[0] !~ /^\d+?$/ || $query->{parameters}->{variants}->{end_range}->[0] !~ /^\d+?$/ ) ) {
+  if ( $query->{parameters}->{variants}->{variant_type} =~ /^D(?:UP)|(?:EL)$/ && ( $query->{parameters}->{variants}->{start_range}->[0] !~ /^\d+?$/ || $query->{parameters}->{variants}->{end_range}->[0] !~ /^\d+?$/ ) ) {
     push(@{ $query->{query_errors} }, 'ERROR: "startMin" (and also startMax) or "endMin" (and also endMax) did not contain a numeric value - both are required for DUP & DEL.') }
 
   if ( $query->{parameters}->{variants}->{variant_type} =~ /^BND$/ && ( $query->{parameters}->{variants}->{start_range}->[0] !~ /^\d+?$/ && $query->{parameters}->{variants}->{end_range}->[0] !~ /^\d+?$/ ) ) {
@@ -222,7 +252,6 @@ sub check_variant_params {
   return $query;
 
 }
-
 
 ################################################################################
 
@@ -413,6 +442,35 @@ sub create_subsets_queries {
 
 	}
 	
+  return $query;
+
+}
+
+################################################################################
+
+sub add_handover_query {
+
+	use MongoDB::MongoClient;
+
+  my $query     =   shift;
+
+  if (! $query->{parameters}->{filters}->{accessid}) { return $query }
+  if ($query->{parameters}->{filters}->{accessid} !~ /$query->{config}->{scopes}->{filters}->{accessid}->{pattern}/) { return $query }
+
+
+	my $handover  =   MongoDB::MongoClient->new()->get_database( $query->{env}->{handover_db} )->get_collection( $query->{env}->{handover_coll} )->find_one( { _id	=>  $query->{parameters}->{filters}->{accessid} } );
+	
+	my $h_o_q			=		{ $handover->{target_key} => { '$in' => $handover->{target_values} } };
+	my $scope			=		$handover->{target_collection};
+
+  if (grep{ /../ } keys %{ $query->{queries}->{$scope} } ) {
+  	$query->{queries}->{$scope}	=		{ '$and' => [
+			$h_o_q,
+			$query->{queries}->{$scope}
+		] };	
+  } else {
+  	$query->{queries}->{$scope}	=		$h_o_q }
+
   return $query;
 
 }

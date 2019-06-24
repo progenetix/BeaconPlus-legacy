@@ -22,6 +22,8 @@ technology_keys:
   - acgh
   - wes
   - wgs
+  - ngs
+  - genomes
 geo_keys:
   - city
   - country

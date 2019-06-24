@@ -134,34 +134,13 @@ sub execute_aggregate_query {
   my $method    =   'callsets::id';
   
   if (! grep{ /../ }
-    keys %{ $query->{callset_query} },
     keys %{ $query->{queries}->{biosamples} },
     keys %{ $query->{queries}->{callsets} },
     keys %{ $query->{queries}->{variants} },
-    $query->{parameters}->{filters}->{accessid}
+    keys %{ $query->{queries}->{individuals} }
   ) { return }
 
 # 1. Checking for a callsets query & return iq query but no matches
-	if ($query->{parameters}->{filters}->{accessid} =~ /^\w[\w\-]+?\w$/) {
-		my $h_o 		=		$prefetch->{handover_coll}->find_one( { _id	=>  $query->{parameters}->{filters}->{accessid} } );
-		if ($h_o->{target_collection} eq 'callsets') {
-		
-			my $pre_Q	=		{ $h_o->{target_key } => { '$in' => $h_o->{target_values} } };
-			if (grep{ /.../ } keys %{ $query->{callset_query} } ) {
-				$query->{callset_query}	=		{ '$and' => [
-					$pre_Q,
-					$query->{callset_query}
-				] };	
-			} else {
-				$query->{callset_query}	=		$pre_Q }
-		}	
-	}
-
-  if (grep{ /.../ } keys %{ $query->{callset_query} } ) {
-    $prefetch->prefetch_data( $method, $query->{callset_query} );
-    if ($prefetch->{handover}->{$method}->{target_count} < 1) { 
-      return $prefetch } 
-  }
 
   if (grep{ /../ } keys %{ $query->{queries}->{callsets} } ) {
 

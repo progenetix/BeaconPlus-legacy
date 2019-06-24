@@ -6,6 +6,37 @@ description: |
   The "alias" parameters provide alternative spellings to the parameter names; 
   this can be helpful when e.g. using dot-annotation which may clash with 
   interpolations.
+api_mappings:
+  - paramkey: apidb
+    default: progenetix
+  - paramkey: apiscope
+    default: publications
+  - paramkey: apimethod
+    default: technologycounts
+  - paramkey: filters
+    default: ""
+  - paramkey: apioutput
+    default: json
+api_methods:
+  technologycounts:
+    scopes:
+      - publications
+  publicationdata:
+    scopes:
+      - publications
+  publicationdetails:
+    scopes:
+      - publications
+  subsethistogram:
+    scopes:
+      - publications
+      - datacollections
+      - biosubsets
+  map:
+    scopes:
+      - publications
+#      - biosamples
+#      - callsets
 filter_prefix_mappings:
   icdom:
     parameter: 'biocharacteristics.type.id'
@@ -27,6 +58,12 @@ filter_prefix_mappings:
     parameter: 'external_references.type.id'
   EFO:
     parameter: 'provenance.material.type.id'
+  city:
+    parameter: 'provenance.geo.city'
+    remove_prefix: true
+  country:
+    parameter: 'provenance.geo.country'
+    remove_prefix: true
   wes:
     parameter: 'counts.wes'
     remove_prefix: true
@@ -39,6 +76,13 @@ filter_prefix_mappings:
   acgh:
     parameter: 'counts.acgh'
     remove_prefix: true
+  genomes:
+    parameter: 'counts.genomes'
+    remove_prefix: true
+  ngs:
+    parameter: 'counts.ngs'
+    remove_prefix: true
+
 scopes:
   variants:
     scope: variants
@@ -217,14 +261,21 @@ scopes:
     scope: publications
     parameters:
       id:
-        paramkey: 'id'
+        paramkey: 'publications.id'
         dbkey: 'id'
-        alias: []
+        alias:
+          - 'external_references.type.id'
         pattern: '^\w+[\:\-$]?(?:[\w]+?)?'
         type: array
       city:
-        paramkey: 'provenance.geo.city'
+        paramkey: 'publications.provenance.geo.city'
         dbkey: 'provenance.geo.city'
+        alias: []
+        pattern: '^\w+[\w\- ]+?$'
+        type: array
+      country:
+        paramkey: 'publications.provenance.geo.country'
+        dbkey: 'provenance.geo.country'
         alias: []
         pattern: '^\w+[\w\- ]+?$'
         type: array
@@ -274,7 +325,7 @@ scopes:
         pattern: '^\d+?$'
         type: integer
       accessid:
-        paramkey: 'handover.filters.accessid'
+        paramkey: 'accessid'
         dbkey: 'accessid'
         alias:
           - filters-accessid
