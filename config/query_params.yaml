@@ -1,10 +1,10 @@
 ---
 description: |
   This file provides configurations for Beacon query related parameters.
-  Parameters are part of different "scopes", which refer to specific (logical 
+  Parameters are part of different "scopes", which refer to specific (logical
   or physical) data collections.
-  The "alias" parameters provide alternative spellings to the parameter names; 
-  this can be helpful when e.g. using dot-annotation which may clash with 
+  The "alias" parameters provide alternative spellings to the parameter names;
+  this can be helpful when e.g. using dot-annotation which may clash with
   interpolations.
 api_mappings:
   - paramkey: apidb
@@ -218,7 +218,7 @@ scopes:
           - 'provenance.geo.city'
           - 'provenance-geo-city'
         pattern: '^\w+[\w\- ]+?$'
-        type: array      
+        type: array
 
   biosubsets:
     scope: biosubsets
@@ -255,7 +255,7 @@ scopes:
           - 'datacollections.provenance.geo.city'
           - 'provenance-geo-city'
         pattern: '^\w+[\w\- ]+?$'
-        type: array      
+        type: array
 
   publications:
     scope: publications
@@ -314,6 +314,15 @@ scopes:
         pattern: '^(?:genomes(?:[\:\-])?)?[><]?\d*?$'
         type: string
 
+  handover:
+    scope: handover
+    parameters:
+      accessid:
+        paramkey: 'accessid'
+        dbkey: '_id'
+        pattern: '^\w[\w\-]+?\w$'
+        type: string
+
   filters:
     scope: filters
     parameters:
@@ -324,11 +333,3 @@ scopes:
           - randno
         pattern: '^\d+?$'
         type: integer
-      accessid:
-        paramkey: 'accessid'
-        dbkey: 'accessid'
-        alias:
-          - filters-accessid
-        pattern: '^\w[\w\-]+?\w$'
-        type: string
-     

@@ -3,6 +3,8 @@ package BeaconPlus::ConfigLoader;
 use File::Basename;
 use YAML::XS qw(LoadFile);
 
+use BeaconPlus::QueryParameters;
+
 require Exporter;
 @ISA    =   qw(Exporter);
 @EXPORT =   qw(
@@ -17,12 +19,21 @@ sub new {
 =cut
 
   my $class     =   shift;
-  my $query			=		shift;
+  my $query			=		BeaconPlus::QueryParameters->new();
   my $self      =   LoadFile(File::Basename::dirname( eval { ( caller() )[1] } ).'/config/config.yaml') or die print 'Content-type: text'."\n\n¡No config.yaml file in this path!";
   bless $self, $class;
   if ($ENV{SERVER_NAME} =~ /\.test$|\//) { $self->{url_base} =~  s/\.org/.test/ }
-  
-#  $self->select_dataset_from_param($query);
+  # $self->{query}		=		$query;
+  $self->{param}		=		$query->{param};
+  $self->{queries}	=		$query->{queries};
+  $self->{filters}  =   $query->{filters};
+  $self->{scopes}   =   $query->{config}->{scopes};
+  $self->{api_methods}  =   $query->{config}->{api_methods};
+  $self->{query_errors}	=		$query->{query_errors};
+  $self->{pretty_params}=   $query->{pretty_params};
+  $self->{cgi}			=		$query->{cgi};
+
+  $self->_select_dataset_from_param();
 
   return $self;
 
@@ -30,17 +41,16 @@ sub new {
 
 ################################################################################
 
-sub select_dataset_from_param {
+sub _select_dataset_from_param {
 
 	my $config		=		shift;
-  my $query			=		shift;
+
+	if (! grep{ /.../ } @{ $config->{param}->{datasetIds} } ) { return $config }
 
 	my @datasets;
-	if (! $query->{cgi}) { return $config }
-
-	foreach my $qds ($query->{cgi}->param('datasetIds')) {
+	foreach my $qds (@{ $config->{param}->{datasetIds} }) {
 		if (grep{ $qds eq $_ } @{ $config->{dataset_names} }) {
-			push(@datasets, $qds) }	
+			push(@datasets, $qds) }
 	}
 
 	if (@datasets > 0) {

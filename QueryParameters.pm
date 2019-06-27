@@ -16,6 +16,7 @@ require Exporter;
   check_variant_params
   create_variant_query
   create_subsets_queries
+  create_handover_query
 );
 
 
@@ -54,7 +55,7 @@ sub new {
   $self->create_variant_query();
   $self->create_sample_queries();
   $self->create_subsets_queries();
-  $self->add_handover_query();
+  $self->create_handover_query();
 
   return $self;
 
@@ -80,7 +81,6 @@ sub read_param_config {
 
   my $query     =   shift;
   $query->{config}  =   LoadFile($query->{here_path}.'/config/query_params.yaml');
-  $query->{env}    	=   BeaconPlus::ConfigLoader->new();
   return $query;
 
 }
@@ -88,7 +88,7 @@ sub read_param_config {
 ################################################################################
 
 sub deparse_query_string {
-  
+
 =pod
 
 The query string is deparsed into a hash reference, in the "$query" object,
@@ -99,7 +99,7 @@ with the conventions of:
   would be deparsed to
     `key = [val1, val2, val3]`
 
-=cut  
+=cut
 
   my $query     =   shift;
 
@@ -109,8 +109,8 @@ with the conventions of:
     if ($qkey =~ /\w/ && grep{ /./ }  @qvalues) {
       foreach my $val (grep{ /./} split(',', join(',', @qvalues))) {
         push(@{ $query->{param}->{$qkey} }, $val);
-      }    
-    } 
+      }
+    }
   }
 
   return $query;
@@ -120,26 +120,26 @@ with the conventions of:
 ################################################################################
 
 sub convert_api_request {
-  
+
 =pod
 
-=cut  
+=cut
 
   my $query     =   shift;
-  
+
   # TODO: in yaml?
   my @request		=		grep{ /\w/ } split('/', $ENV{REQUEST_URI});
-  
+
   if ($request[0] !~ /^api$/i) { return $query }
-  
+
 	shift @request;	# remove the api part
 	foreach (@{$query->{config}->{api_mappings}}) {
 		$query->{param}->{ $_->{paramkey} }	=		 [ $_->{default} ];
-  	if ($request[0] =~ /^\?/i) 	{ last }	
-  	if ($request[0] !~ /\w/i) 	{	last }	
+  	if ($request[0] =~ /^\?/i) 	{ last }
+  	if ($request[0] !~ /\w/i) 	{	last }
 		$query->{param}->{ $_->{paramkey} }	=	[ shift @request ];
 
-	} 
+	}
 
   return $query;
 
@@ -172,7 +172,7 @@ sub scope_filters {
 sub map_scoped_params {
 
   my $query     =   shift;
-  
+
   foreach my $scope (keys %{ $query->{config}->{scopes} }) {
     my $thisP   =   $query->{config}->{scopes}->{$scope}->{parameters};
     foreach my $q_param (grep{ /\w/ } keys %{ $thisP }) {
@@ -191,8 +191,8 @@ sub map_scoped_params {
                  push(@{ $query->{pretty_params}->{$q_param} }, $val) }
               }
               else {
-#if ($scope eq 'filters') { print Dumper($scope, $dbK, $val)."<hr/>\n\n"; }   
-                $query->{parameters}->{$scope}->{$dbK}  =   $val;    
+#print Dumper($scope, $dbK, $val)."<hr/>\n\n";
+                $query->{parameters}->{$scope}->{$dbK}  =   $val;
                 if ($scope =~ /variants/) {
                   $query->{pretty_params}->{$q_param}   =   $val }
   }}}}}}}
@@ -211,7 +211,7 @@ sub norm_variant_params {
   # this also fills in min = max if only one parameter has been provided
   # for start or end, respectively
   my @rangeVals =   ();
-  
+
   foreach my $side (qw(start end)) {
     my $parKeys =   [ grep{ /^$side(?:_m(?:(?:in)|(?:ax)))?$/ } keys %{ $query->{parameters}->{variants} } ];
     my @parVals =   grep{ /^\d+?$/ } @{ $query->{parameters}->{variants} }{ @$parKeys };
@@ -219,7 +219,7 @@ sub norm_variant_params {
     $query->{parameters}->{variants}->{$side.'_range'}  =  [ $parVals[0], $parVals[-1] ];
     push(@rangeVals, $parVals[0], $parVals[-1]);
   }
-  
+
   @rangeVals    =  sort {$a <=> $b} grep{  /^\d+?$/ } @rangeVals;
   $query->{parameters}->{variants}->{pos_range} =   [ $rangeVals[0], $rangeVals[-1] ];
 
@@ -234,7 +234,7 @@ sub norm_variant_params {
 sub check_variant_params {
 
   my $query     =   shift;
-  
+
   # TODO: Use the Beacon specificaion for allowed values
 
   if ( $query->{parameters}->{variants}->{variant_type} =~ /^D(?:UP)|(?:EL)$/ && ( $query->{parameters}->{variants}->{start_range}->[0] !~ /^\d+?$/ || $query->{parameters}->{variants}->{end_range}->[0] !~ /^\d+?$/ ) ) {
@@ -271,7 +271,7 @@ sub create_variant_query {
 }
 
 ################################################################################
- 
+
 sub create_cnv_query {
 
   my $query     =   shift;
@@ -286,11 +286,11 @@ sub create_cnv_query {
       { end   =>  { '$lte'  =>  1 * $query->{parameters}->{variants}->{end_range}->[1] } },
     ],
   };
-  
+
   return $query;
 
 }
-  
+
 ################################################################################
 
 sub create_bnd_query {
@@ -329,12 +329,12 @@ sub create_bnd_query {
 sub create_precise_query {
 
   my $query     =   shift;
-  
+
   if ($query->{parameters}->{variants}->{alternate_bases} =~ /N/) {
-    $query->{parameters}->{variants}->{alternate_bases} =~  s/N/./g;  
+    $query->{parameters}->{variants}->{alternate_bases} =~  s/N/./g;
     $query->{parameters}->{variants}->{alternate_bases} =   qr/^$query->{parameters}->{variants}->{alternate_bases}$/;
   }
-  
+
   my @qList     =   (
     { reference_name  =>  $query->{parameters}->{variants}->{reference_name} },
     { alternate_bases =>  $query->{parameters}->{variants}->{alternate_bases} },
@@ -363,7 +363,7 @@ Queries with multiple options for the same attribute are treated as logical "OR"
 =cut
 
   my $query     =   shift;
-  
+
   foreach my $scope (qw(biosamples callsets)) {
 
 		my @qList;
@@ -373,7 +373,7 @@ Queries with multiple options for the same attribute are treated as logical "OR"
 			if (ref $query->{parameters}->{$scope}->{$qKey} eq 'ARRAY') {
 				foreach (@{ $query->{parameters}->{$scope}->{$qKey} }) {
 					$thisQlist{ $qKey.'::'.$_ }	=		{ $qKey => qr/^$_/i };
-				}      	
+				}
 			}
 			else {
 				$thisQlist{ $qKey.'::'.$query->{parameters}->{$scope}->{$qKey} }	= { $qKey => qr/^$query->{parameters}->{$scope}->{$qKey}/i } }
@@ -396,7 +396,7 @@ The construction of the query object depends on the detected parameters:
 		elsif (@qList > 1)  { $query->{queries}->{$scope} =   { '$and' => \@qList } }
 
 	}
-	
+
   return $query;
 
 }
@@ -416,9 +416,9 @@ sub create_subsets_queries {
 			if (ref $query->{parameters}->{$scope}->{$qKey} eq 'ARRAY') {
 				foreach (@{ $query->{parameters}->{$scope}->{$qKey} }) { push(@thisQlist, { $qKey => qr/^$_/i }) } }
 			else {
-			
+
 				my $val	=		$query->{parameters}->{$scope}->{$qKey};
-				
+
 				if ($val =~ /^(<|>\=?)(\d+?(\.\d+?)?)$/) {
 					my ($rel, $num)	=		($1, 1 * $2);
 					if ($rel eq '>') {
@@ -428,7 +428,7 @@ sub create_subsets_queries {
 					if ($rel eq '>=') {
 						push(@thisQlist, { $qKey => { '$gte' => $num } } ) }
 					if ($rel eq '<=') {
-						push(@thisQlist, { $qKey => { '$lte' => $num } } ) }					
+						push(@thisQlist, { $qKey => { '$lte' => $num } } ) }
 				} else {
 					push(@thisQlist, { $qKey => qr/^$val/i } ) }
 			}
@@ -441,35 +441,21 @@ sub create_subsets_queries {
 		elsif (@qList > 1)  { $query->{queries}->{$scope} =   { '$and' => \@qList } }
 
 	}
-	
+
   return $query;
 
 }
 
 ################################################################################
 
-sub add_handover_query {
-
-	use MongoDB::MongoClient;
+sub create_handover_query {
 
   my $query     =   shift;
 
-  if (! $query->{parameters}->{filters}->{accessid}) { return $query }
-  if ($query->{parameters}->{filters}->{accessid} !~ /$query->{config}->{scopes}->{filters}->{accessid}->{pattern}/) { return $query }
+  if (! $query->{parameters}->{handover}->{_id}) { return $query }
+  if ($query->{parameters}->{handover}->{_id} !~ /$query->{config}->{scopes}->{handover}->{accessid}->{pattern}/) { return $query }
 
-
-	my $handover  =   MongoDB::MongoClient->new()->get_database( $query->{env}->{handover_db} )->get_collection( $query->{env}->{handover_coll} )->find_one( { _id	=>  $query->{parameters}->{filters}->{accessid} } );
-	
-	my $h_o_q			=		{ $handover->{target_key} => { '$in' => $handover->{target_values} } };
-	my $scope			=		$handover->{target_collection};
-
-  if (grep{ /../ } keys %{ $query->{queries}->{$scope} } ) {
-  	$query->{queries}->{$scope}	=		{ '$and' => [
-			$h_o_q,
-			$query->{queries}->{$scope}
-		] };	
-  } else {
-  	$query->{queries}->{$scope}	=		$h_o_q }
+  $query->{queries}->{handover} =   { _id	=>  $query->{parameters}->{handover}->{_id} };
 
   return $query;
 
