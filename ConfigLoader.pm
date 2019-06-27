@@ -41,7 +41,7 @@ Objects accessible through `$config`
   my $self      =   LoadFile(File::Basename::dirname( eval { ( caller() )[1] } ).'/config/config.yaml') or die print 'Content-type: text'."\n\n¡No config.yaml file in this path!";
   bless $self, $class;
 
-   my $query			=		BeaconPlus::QueryParameters->new();
+  my $query			=		BeaconPlus::QueryParameters->new();
 
  if ($ENV{SERVER_NAME} =~ /\.test$|\//) { $self->{url_base} =~  s/\.org/.test/ }
   # $self->{query}		=		$query;

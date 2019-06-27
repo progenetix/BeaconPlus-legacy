@@ -19,7 +19,6 @@ require Exporter;
   create_handover_query
 );
 
-
 sub new {
 
   use File::Basename;
@@ -89,15 +88,20 @@ sub read_param_config {
 
 sub deparse_query_string {
 
-=pod
+=markdown
 
 The query string is deparsed into a hash reference, in the "$query" object,
 with the conventions of:
+
 * each parameter is treated as containing a list of values
-* values are split into a list by the comma character; so an example of
+* values are __split into a list by the comma character__; so an example of
     `key=val1&key=val2,val3`
   would be deparsed to
     `key = [val1, val2, val3]`
+
+The treatment of each attribute as pointing to an array leads to a consistent,
+though sometimes awkward, access to the values; even consistently unary values
+have to be addressed as (first) array element.
 
 =cut
 
@@ -358,7 +362,10 @@ sub create_precise_query {
 
 sub create_sample_queries {
 
-=pod
+=markdown
+
+#### Sample (_biosamples_ and _callsets_) Queries
+
 Queries with multiple options for the same attribute are treated as logical "OR".
 =cut
 
@@ -382,7 +389,7 @@ Queries with multiple options for the same attribute are treated as logical "OR"
       elsif (scalar keys %thisQlist > 1)  { push(@qList, {'$or' => [ values %thisQlist ] } ) }
     }
 
-=pod
+=markdown
 
 The construction of the query object depends on the detected parameters:
 
