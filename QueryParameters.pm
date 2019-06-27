@@ -41,8 +41,8 @@ sub new {
 
   bless $self, $class;
 
-	if ($self->{cgi}->param(debug) > 0) {
-		print 'Content-type: text/plain'."\n\n" }
+  if ($self->{cgi}->param(debug) > 0) {
+    print 'Content-type: text/plain'."\n\n" }
 
 #  $self->read_beacon_specs();
   $self->read_param_config();
@@ -128,18 +128,18 @@ sub convert_api_request {
   my $query     =   shift;
 
   # TODO: in yaml?
-  my @request		=		grep{ /\w/ } split('/', $ENV{REQUEST_URI});
+  my @request    =    grep{ /\w/ } split('/', $ENV{REQUEST_URI});
 
   if ($request[0] !~ /^api$/i) { return $query }
 
-	shift @request;	# remove the api part
-	foreach (@{$query->{config}->{api_mappings}}) {
-		$query->{param}->{ $_->{paramkey} }	=		 [ $_->{default} ];
-  	if ($request[0] =~ /^\?/i) 	{ last }
-  	if ($request[0] !~ /\w/i) 	{	last }
-		$query->{param}->{ $_->{paramkey} }	=	[ shift @request ];
+  shift @request;  # remove the api part
+  foreach (@{$query->{config}->{api_mappings}}) {
+    $query->{param}->{ $_->{paramkey} }  =     [ $_->{default} ];
+    if ($request[0] =~ /^\?/i)   { last }
+    if ($request[0] !~ /\w/i)   {  last }
+    $query->{param}->{ $_->{paramkey} }  =  [ shift @request ];
 
-	}
+  }
 
   return $query;
 
@@ -152,15 +152,15 @@ sub scope_filters {
 
   my $query     =   shift;
 
-  foreach my $filterV	(@{ $query->{param}->{filters} }) {
-  	foreach my $pre	(keys %{ $query->{config}->{filter_prefix_mappings} }) {
-  		if ($filterV	=~ 	/^$pre(\:|\-|$)/) {
-				if ($query->{config}->{filter_prefix_mappings}->{$pre}->{remove_prefix}) {
-					$filterV	=~	s/^$pre(\:|\-)?// }
-  			push(
-  				@{ $query->{param}->{ $query->{config}->{filter_prefix_mappings}->{$pre}->{parameter} } },
-  				$filterV
-  			);
+  foreach my $filterV  (@{ $query->{param}->{filters} }) {
+    foreach my $pre  (keys %{ $query->{config}->{filter_prefix_mappings} }) {
+      if ($filterV  =~   /^$pre(\:|\-|$)/) {
+        if ($query->{config}->{filter_prefix_mappings}->{$pre}->{remove_prefix}) {
+          $filterV  =~  s/^$pre(\:|\-)?// }
+        push(
+          @{ $query->{param}->{ $query->{config}->{filter_prefix_mappings}->{$pre}->{parameter} } },
+          $filterV
+        );
   }}}
 
   return $query;
@@ -181,7 +181,7 @@ sub map_scoped_params {
       foreach my $val (@{ $query->{param}->{$alias} }) {
          if ($thisP->{$q_param}->{type} =~/(?:num)|(?:int)|(?:float)/i) {
             $val  =~  tr/[^\d\.\-]//;
-       			if (grep{ $q_param =~ /$_/ } qw(start end)) { $val =~ s/[^\d]//g }
+             if (grep{ $q_param =~ /$_/ } qw(start end)) { $val =~ s/[^\d]//g }
             $val  *=  1 }
           if ($val =~ /./) {
             if ($val =~ /$thisP->{$q_param}->{pattern}/) {
@@ -366,21 +366,21 @@ Queries with multiple options for the same attribute are treated as logical "OR"
 
   foreach my $scope (qw(biosamples callsets)) {
 
-		my @qList;
+    my @qList;
 
-		foreach my $qKey (keys %{ $query->{parameters}->{$scope} }) {
-			my %thisQlist;
-			if (ref $query->{parameters}->{$scope}->{$qKey} eq 'ARRAY') {
-				foreach (@{ $query->{parameters}->{$scope}->{$qKey} }) {
-					$thisQlist{ $qKey.'::'.$_ }	=		{ $qKey => qr/^$_/i };
-				}
-			}
-			else {
-				$thisQlist{ $qKey.'::'.$query->{parameters}->{$scope}->{$qKey} }	= { $qKey => qr/^$query->{parameters}->{$scope}->{$qKey}/i } }
+    foreach my $qKey (keys %{ $query->{parameters}->{$scope} }) {
+      my %thisQlist;
+      if (ref $query->{parameters}->{$scope}->{$qKey} eq 'ARRAY') {
+        foreach (@{ $query->{parameters}->{$scope}->{$qKey} }) {
+          $thisQlist{ $qKey.'::'.$_ }  =    { $qKey => qr/^$_/i };
+        }
+      }
+      else {
+        $thisQlist{ $qKey.'::'.$query->{parameters}->{$scope}->{$qKey} }  = { $qKey => qr/^$query->{parameters}->{$scope}->{$qKey}/i } }
 
-			if (scalar keys %thisQlist == 1)    { push(@qList, (values %thisQlist)[0]) }
-			elsif (scalar keys %thisQlist > 1)  { push(@qList, {'$or' => [ values %thisQlist ] } ) }
-		}
+      if (scalar keys %thisQlist == 1)    { push(@qList, (values %thisQlist)[0]) }
+      elsif (scalar keys %thisQlist > 1)  { push(@qList, {'$or' => [ values %thisQlist ] } ) }
+    }
 
 =pod
 
@@ -392,10 +392,10 @@ The construction of the query object depends on the detected parameters:
 
 =cut
 
-		if (@qList == 1)    { $query->{queries}->{$scope} =   $qList[0] }
-		elsif (@qList > 1)  { $query->{queries}->{$scope} =   { '$and' => \@qList } }
+    if (@qList == 1)    { $query->{queries}->{$scope} =   $qList[0] }
+    elsif (@qList > 1)  { $query->{queries}->{$scope} =   { '$and' => \@qList } }
 
-	}
+  }
 
   return $query;
 
@@ -408,39 +408,39 @@ sub create_subsets_queries {
   my $query     =   shift;
 
   foreach my $scope (qw(biosubsets datacollections publications)) {
-		my @qList;
+    my @qList;
 
-		foreach my $qKey (keys %{ $query->{parameters}->{$scope} }) {
-			my @thisQlist;
+    foreach my $qKey (keys %{ $query->{parameters}->{$scope} }) {
+      my @thisQlist;
 
-			if (ref $query->{parameters}->{$scope}->{$qKey} eq 'ARRAY') {
-				foreach (@{ $query->{parameters}->{$scope}->{$qKey} }) { push(@thisQlist, { $qKey => qr/^$_/i }) } }
-			else {
+      if (ref $query->{parameters}->{$scope}->{$qKey} eq 'ARRAY') {
+        foreach (@{ $query->{parameters}->{$scope}->{$qKey} }) { push(@thisQlist, { $qKey => qr/^$_/i }) } }
+      else {
 
-				my $val	=		$query->{parameters}->{$scope}->{$qKey};
+        my $val  =  $query->{parameters}->{$scope}->{$qKey};
 
-				if ($val =~ /^(<|>\=?)(\d+?(\.\d+?)?)$/) {
-					my ($rel, $num)	=		($1, 1 * $2);
-					if ($rel eq '>') {
-						push(@thisQlist, { $qKey => { '$gt' => $num } } ) }
-					if ($rel eq '<') {
-						push(@thisQlist, { $qKey => { '$lt' => $num } } ) }
-					if ($rel eq '>=') {
-						push(@thisQlist, { $qKey => { '$gte' => $num } } ) }
-					if ($rel eq '<=') {
-						push(@thisQlist, { $qKey => { '$lte' => $num } } ) }
-				} else {
-					push(@thisQlist, { $qKey => qr/^$val/i } ) }
-			}
+        if ($val =~ /^(<|>\=?)(\d+?(\.\d+?)?)$/) {
+          my ($rel, $num)  =    ($1, 1 * $2);
+          if ($rel eq '>') {
+            push(@thisQlist, { $qKey => { '$gt' => $num } } ) }
+          if ($rel eq '<') {
+            push(@thisQlist, { $qKey => { '$lt' => $num } } ) }
+          if ($rel eq '>=') {
+            push(@thisQlist, { $qKey => { '$gte' => $num } } ) }
+          if ($rel eq '<=') {
+            push(@thisQlist, { $qKey => { '$lte' => $num } } ) }
+        } else {
+          push(@thisQlist, { $qKey => qr/^$val/i } ) }
+      }
 
-			if (@thisQlist == 1)    { push(@qList, $thisQlist[0]) }
-			elsif (@thisQlist > 1)  { push(@qList, {'$or' => [ @thisQlist ] } ) }
-		}
+      if (@thisQlist == 1)    { push(@qList, $thisQlist[0]) }
+      elsif (@thisQlist > 1)  { push(@qList, {'$or' => [ @thisQlist ] } ) }
+    }
 
-		if (@qList == 1)    { $query->{queries}->{$scope} =   $qList[0] }
-		elsif (@qList > 1)  { $query->{queries}->{$scope} =   { '$and' => \@qList } }
+    if (@qList == 1)    { $query->{queries}->{$scope} =   $qList[0] }
+    elsif (@qList > 1)  { $query->{queries}->{$scope} =   { '$and' => \@qList } }
 
-	}
+  }
 
   return $query;
 
@@ -455,7 +455,7 @@ sub create_handover_query {
   if (! $query->{parameters}->{handover}->{_id}) { return $query }
   if ($query->{parameters}->{handover}->{_id} !~ /$query->{config}->{scopes}->{handover}->{accessid}->{pattern}/) { return $query }
 
-  $query->{queries}->{handover} =   { _id	=>  $query->{parameters}->{handover}->{_id} };
+  $query->{queries}->{handover} =   { _id  =>  $query->{parameters}->{handover}->{_id} };
 
   return $query;
 

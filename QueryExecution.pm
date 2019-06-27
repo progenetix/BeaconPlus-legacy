@@ -2,7 +2,6 @@ package BeaconPlus::QueryExecution;
 
 use Data::Dumper;
 use UUID::Tiny;
-use PGX::Helpers::UtilityLibs;
 use BeaconPlus::ConfigLoader;
 
 require Exporter;
@@ -122,7 +121,7 @@ in a handover object `$prefetch->{handover}->{'callsets::id'}`.
     if ($prefetch->{handover}->{$thisM}->{target_count} < 1) {
       return $prefetch }
 
-	}
+  }
 
 =markdown
 #### 3. __biosamples__ query
@@ -341,7 +340,7 @@ scenarios.
 
   my $distVals  =   $distincts->{values};
   if ($prefetch->{filters}->{randno} > 0) {
-    $distVals   =   RandArr($distVals, $prefetch->{filters}->{randno}) }
+    $distVals   =   BeaconPlus::ConfigLoader::RandArr($distVals, $prefetch->{filters}->{randno}) }
 
   $prefetch->{handover}->{$method}  =   {
     source_db         =>  $prefetch->{dataset},
@@ -423,17 +422,17 @@ modified.
   my $prefetch  =   shift;
   if (! grep{ /../ } keys %{ $prefetch->{queries}->{handover} } ) { return $prefetch }
 
-	my $handover  =   $prefetch->{handover_coll}->find_one( $prefetch->{queries}->{handover} );
+  my $handover  =   $prefetch->{handover_coll}->find_one( $prefetch->{queries}->{handover} );
 
   if (! $handover->{target_values}) { return $prefetch }
-	my $h_o_q			=		{ $handover->{target_key} => { '$in' => $handover->{target_values} } };
-	my $scope			=		$handover->{target_collection};
+  my $h_o_q			=		{ $handover->{target_key} => { '$in' => $handover->{target_values} } };
+  my $scope			=		$handover->{target_collection};
 
   if (grep{ /../ } keys %{ $prefetch->{queries}->{$scope} } ) {
   	$prefetch->{queries}->{$scope}	=		{ '$and' => [
-			$h_o_q,
-			$prefetch->{queries}->{$scope}
-		] };
+  $h_o_q,
+  $prefetch->{queries}->{$scope}
+  ] };
   } else {
   	$prefetch->{queries}->{$scope}	=		$h_o_q }
 
