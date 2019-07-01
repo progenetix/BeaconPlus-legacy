@@ -76,7 +76,7 @@ handover_types:
 genome_assemblies:
   - 'GRCh38'
 url: 'https://beacon.progenetix.org/beacon/info/'
-url_base: 'https://beacon.progenetix.org'
+url_base: 'https://progenetix.org'
 url_alt: 'https://beacon.arraymap.org/beacon/info/'
 url_logo: 'https://progenetix.org/p/progenetix.png'
 actions:

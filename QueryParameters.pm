@@ -23,7 +23,12 @@ sub new {
 
   use File::Basename;
 
-=pod
+=markdown
+The _BeaconPlus_ environment utilizes the _Beacon_ protocol for federated genomic
+variant queries, extended by methods discussed in the Beacon API development
+and custom extensions which may - or may not - make it into the Beacon
+specification but help to increase the usability of the
+[Progenetix](http://progenetix.org) resource.
 
 =cut
 
@@ -31,7 +36,6 @@ sub new {
 
   my $self      =   {
     here_path       =>  File::Basename::dirname( eval { ( caller() )[1] } ),
-    pretty_params   =>  {},
     query_errors    =>  [],
     parameters      =>  {},
     queries         =>  {},
@@ -63,6 +67,15 @@ sub new {
 ################################################################################
 
 sub read_beacon_specs {
+
+=markdown
+### Reading the Beacon Specification
+
+While the specification _in principle_ follows the Beacon specification, and
+offers a minimal method to access it, this optioned isn't used in practice due
+to the "forward looking" nature of some of the BeaconPlus methods.
+
+=cut
 
   use YAML::XS qw(LoadFile);
 
@@ -191,14 +204,9 @@ sub map_scoped_params {
             if ($val =~ /$thisP->{$q_param}->{pattern}/) {
               if ($thisP->{$q_param}->{type} =~ /array/i) {
                 push(@{ $query->{parameters}->{$scope}->{$dbK} }, $val);
-                if ($scope =~ /variants/) {
-                 push(@{ $query->{pretty_params}->{$q_param} }, $val) }
               }
               else {
-#print Dumper($scope, $dbK, $val)."<hr/>\n\n";
                 $query->{parameters}->{$scope}->{$dbK}  =   $val;
-                if ($scope =~ /variants/) {
-                  $query->{pretty_params}->{$q_param}   =   $val }
   }}}}}}}
 
   return $query;

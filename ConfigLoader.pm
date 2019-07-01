@@ -51,7 +51,6 @@ Objects accessible through `$config`
 #  $self->{scopes}   =   $query->{config}->{scopes};
   $self->{api_methods}  =   $query->{config}->{api_methods};
   $self->{query_errors}	=		$query->{query_errors};
-  $self->{pretty_params}=   $query->{pretty_params};
   $self->{cgi}			=		$query->{cgi};
 
   $self->_select_dataset_from_param();

@@ -46,7 +46,7 @@ sub create_handover_exporter {
     if ($handoverPre->{target_count} < 1) { next }
 
     if ($handoverType->{script_path_web} !~ /cgi/) {
-      $handoverType->{script_path_web}  =   '/beaconplus-server/beacondeliver.cgi' }
+      $handoverType->{script_path_web}  =   '/cgi-bin/beacondeliver.cgi' }
 
     if ($handoverType->{script_path_web} !~ /beacon/) {
       $urlBase  =~   s/\/\/beacon\./\/\// }
