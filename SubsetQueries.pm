@@ -18,7 +18,7 @@ sub new {
   use MongoDB::MongoClient;
   $MongoDB::Cursor::timeout = 120000;
 
-=markdown
+=podmd
 This library provides non-Beacon standard  _convenience_ functionality for
 the Progenetix Beacon environment to access data collections
 

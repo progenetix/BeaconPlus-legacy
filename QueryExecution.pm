@@ -18,7 +18,7 @@ sub new {
   use File::Basename;
   $MongoDB::Cursor::timeout = 120000;
 
-=markdown
+=podmd
 This module provides the complete query execution, result aggregation and
 creation of temporary storage objects for the BeaconPlus infrastructure.
 
@@ -70,7 +70,7 @@ sub execute_aggregate_query {
 
   my $prefetch  =   shift;
 
-=markdown
+=podmd
 
 #### 1. __handover__ query
 
@@ -99,7 +99,7 @@ More documentation can be found [below](#prefetch_to_scoped_query).
     keys %{ $prefetch->{queries}->{individuals} }
   ) { return }
 
-=markdown
+=podmd
 
 #### 2. __callsets__ query
 
@@ -123,7 +123,7 @@ in a handover object `$prefetch->{handover}->{'callsets::id'}`.
 
   }
 
-=markdown
+=podmd
 #### 3. __biosamples__ query
 
 If a specific __biosamples__ query exists, their ids are stored ina a _handover_
@@ -141,7 +141,7 @@ object `$prefetch->{handover}->{'biosamples::id'}`.
     if ($prefetch->{handover}->{$thisM}->{target_count} < 1) {
       return $prefetch }
 
-=markdown
+=podmd
 ##### 3a. callsets aggregation on matched biosamples
 
 If biosamples were matched, the corresponding `callset_id` values are retrieved.
@@ -166,7 +166,7 @@ intersection through added "$in" query construct
       return $prefetch }
   }
 
-=markdown
+=podmd
 #### 4. __variants__ query
 
 A variant query is checked & executed if defined. If there had been _callsets_
@@ -216,7 +216,7 @@ values.
 
   }
 
-=markdown
+=podmd
 #### 5. Final result aggregation and storage of the `_id` based h->o objects
 
 Up to this point, queries against callsets, biosamples and variants have
@@ -249,7 +249,7 @@ and store the corresponding pointers using `callsets::_id`
     { 'id' => { '$in' => $prefetch->{handover}->{'callsets::id'}->{target_values} } },
   );
 
-=markdown
+=podmd
 #### 5a. Populating the `counts` object
 
 Foreach of callsets, biosamples and variants the object count is added to the
@@ -267,7 +267,7 @@ Foreach of callsets, biosamples and variants the object count is added to the
       $prefetch->{counts}->{$_.'_match_count'} =   $prefetch->{handover}->{$_.'::_id'}->{target_count} }
   }
 
-=markdown
+=podmd
 
 ### Query results
 
@@ -290,7 +290,7 @@ different queries:
 
 sub prefetch_data {
 
-=markdown
+=podmd
 
 ### Handover objects
 
@@ -360,7 +360,7 @@ scenarios.
 
 sub create_handover_object {
 
-=markdown
+=podmd
 #### Creating Handover documents
 
 The `create_handover_object` method is a wrapper for the `prefetch_data`
@@ -404,7 +404,7 @@ sub get_base_counts {
 
 sub prefetch_to_scoped_query {
 
-=markdown
+=podmd
 
 #### <a id="prefetch_to_scoped_query"></a>Extracting pre-selected items from a handover query
 

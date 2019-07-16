@@ -1,22 +1,64 @@
 #
 ---
-api_version: '1.0'
-change_date: '2018-10-10'
-beacon_id: 'progenetix-beacon'
+apiVersion: '1.1.0'
+changeDate: '2019-07-15'
+beaconId: 'progenetix-beacon'
 description: |
   A forward looking implementation for Beacon+ development, with focus on structural variants and metadata.
-provider:
-  - 'Michael Baudis'
-  - 'Theoretical Cytogenetics and Oncogenomics, Department of Molecular Life Sciences, University of Zurich'
-  - 'http://www.imls.uzh.ch/en/research/baudis.html'
-  - 'http://info.baudisgroup.org/'
-  - 'Swiss Institute of Bioinformatics - SIB'
-  - 'http://www.sib.swiss/baudis-michael'
-dataset_names:
-  - arraymap
-  - progenetix
-  - tcga
-  - dipg
+service_info:
+  id: org.progenetix.beacon
+  name: 'Beacon+ interface to Progenetix cancer genome profile collections'
+  type: 'urn:ga4gh:beacon'
+  description: |
+    Beacon+ provides a forward looking implementation of the Beacon API, with focus on structural variants and metadata based on the cancer and reference genome profiling data represented in the Progenetix oncogenomic data resource (http://progenetix.org).
+  documentationUrl: 'https://info.progenetix.org/tags/Beacon.html'
+  serviceUrl: "https://beacon.progenetix.org/"
+  serviceType: "GA4GHBeacon"
+  welcomeUrl: "https://beacon.progenetix.org/ui/"
+  alternativeUrl: "https://progenetix.org"
+  contactUrl: 'mailto:contact@progenetix.org'
+  version: '1.1.0'
+  open: true
+  organization:
+    id: 'org.baudisgroup'
+    name: 'baudisgroup at UZH and SIB'
+    description: |
+      The "Theoretical Cytogenetics and Oncogenomics" group at the University of Zurich (UZH) and the Swiss Institute of Bioinformatics (SIB) performs research in cancer genomics and provides bioinformatics tools and cancer genome data resources to the scientific community.
+    address: "Department of Molecular Life Sciences, University of Zurich, Winterthurerstrasse 190, CH-8057 Zurich, Switzerland"
+    welcomeUrl: 'https://info.baudisgroup.org'
+    info:
+      provider:
+        - 'Michael Baudis'
+        - 'Theoretical Cytogenetics and Oncogenomics, Department of Molecular Life Sciences, University of Zurich'
+        - 'http://www.imls.uzh.ch/en/research/baudis.html'
+        - 'http://info.baudisgroup.org/'
+        - 'Swiss Institute of Bioinformatics - SIB'
+        - 'http://www.sib.swiss/baudis-michael' 
+datasets:
+  - id: arraymap
+    description: "arraymap cancer CNV dataset"
+    variantCount: 1
+    info:
+      authorized: true
+      accessType: PUBLIC
+  - id: progenetix
+    description: "Progenetix cancer genome profiles"
+    variantCount: 1
+    info:
+      authorized: true
+      accessType: PUBLIC
+  - id: tcga
+    description: "TCGA CNVs"
+    variantCount: 1
+    info:
+      authorized: true
+      accessType: PUBLIC
+  - id: dipg
+    description: "DIPG data from publication Mackay et al., 2017"
+    variantCount: 1
+    info:
+      authorized: true
+      accessType: PUBLIC
 technology_keys:
   - ccgh
   - acgh
@@ -40,7 +82,6 @@ collection_names:
   variant_collection: variants
   biosample_collection: biosamples
   individual_collection: individuals
-  biosubset_collection: biosubsets
 handover_types:
   cnvhistogram:
     id: 'pgx:handover:cnvhistogram'

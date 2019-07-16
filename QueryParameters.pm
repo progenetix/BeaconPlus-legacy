@@ -23,7 +23,7 @@ sub new {
 
   use File::Basename;
 
-=markdown
+=podmd
 The _BeaconPlus_ environment utilizes the _Beacon_ protocol for federated genomic
 variant queries, extended by methods discussed in the Beacon API development
 and custom extensions which may - or may not - make it into the Beacon
@@ -68,7 +68,7 @@ specification but help to increase the usability of the
 
 sub read_beacon_specs {
 
-=markdown
+=podmd
 ### Reading the Beacon Specification
 
 While the specification _in principle_ follows the Beacon specification, and
@@ -101,7 +101,7 @@ sub read_param_config {
 
 sub deparse_query_string {
 
-=markdown
+=podmd
 
 The query string is deparsed into a hash reference, in the "$query" object,
 with the conventions of:
@@ -147,14 +147,14 @@ sub convert_api_request {
   # TODO: in yaml?
   my @request    =    grep{ /\w/ } split('/', $ENV{REQUEST_URI});
 
-  if ($request[0] !~ /^api$/i) { return $query }
+  if ($request[0] ne 'api') { return $query }
 
   shift @request;  # remove the api part
   foreach (@{$query->{config}->{api_mappings}}) {
     $query->{param}->{ $_->{paramkey} }  =     [ $_->{default} ];
     if ($request[0] =~ /^\?/i)   { last }
     if ($request[0] !~ /\w/i)   {  last }
-    $query->{param}->{ $_->{paramkey} }  =  [ shift @request ];
+    $query->{param}->{ $_->{paramkey} }  =  [ split(',', shift @request) ];
 
   }
 
@@ -370,7 +370,7 @@ sub create_precise_query {
 
 sub create_sample_queries {
 
-=markdown
+=podmd
 
 #### Sample (_biosamples_ and _callsets_) Queries
 
@@ -397,7 +397,7 @@ Queries with multiple options for the same attribute are treated as logical "OR"
       elsif (scalar keys %thisQlist > 1)  { push(@qList, {'$or' => [ values %thisQlist ] } ) }
     }
 
-=markdown
+=podmd
 
 The construction of the query object depends on the detected parameters:
 

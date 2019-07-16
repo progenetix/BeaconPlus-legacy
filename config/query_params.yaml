@@ -18,6 +18,10 @@ api_mappings:
   - paramkey: apioutput
     default: json
 api_methods:
+  mappings:
+    scopes:
+      - biosubsets
+      - datacollections
   technologycounts:
     scopes:
       - publications
@@ -82,7 +86,12 @@ filter_prefix_mappings:
   ngs:
     parameter: 'counts.ngs'
     remove_prefix: true
-
+  pgxsamples:
+    parameter: 'info.progenetix_biosamples_count'
+    remove_prefix: true
+  amsamples:
+    parameter: 'info.arraymap_biosamples_count'
+    remove_prefix: true
 scopes:
   variants:
     scope: variants
@@ -312,6 +321,18 @@ scopes:
         dbkey: 'counts.genomes'
         alias: []
         pattern: '^(?:genomes(?:[\:\-])?)?[><]?\d*?$'
+        type: string
+      pgxsamplecount:
+        paramkey: 'publications.info.progenetix_biosamples_count'
+        dbkey: 'info.progenetix_biosamples_count'
+        alias: []
+        pattern: '^(?:pgx_samples(?:[\:\-])?)?[><]?\d*?$'
+        type: string
+      amsamplecount:
+        paramkey: 'publications.info.arraymap_biosamples_count'
+        dbkey: 'info.arraymap_biosamples_count'
+        alias: []
+        pattern: '^(?:amsamples(?:[\:\-])?)?[><]?\d*?$'
         type: string
 
   handover:

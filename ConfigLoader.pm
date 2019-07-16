@@ -15,7 +15,7 @@ require Exporter;
 
 sub new {
 
-=markdown
+=podmd
 The BeaconPlus::ConfigLoader library
 
 * configures the execution environment based on the parameters in the `./config/config.yaml` file
@@ -65,6 +65,8 @@ sub _select_dataset_from_param {
 
 	my $config		=		shift;
 
+	$config->{dataset_names}	=		[ map{ $_->{id} } @{ $config->{datasets} } ];
+
 	if (! grep{ /.../ } @{ $config->{param}->{datasetIds} } ) { return $config }
 
 	my @datasets;
@@ -84,7 +86,7 @@ sub _select_dataset_from_param {
 
 sub RandArr {
 
-=markdown
+=podmd
 ### RandArr
 
 This dependency-free array randomiser will return a re-shuffled array(ref) or
