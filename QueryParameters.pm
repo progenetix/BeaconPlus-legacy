@@ -102,6 +102,7 @@ sub read_param_config {
 sub deparse_query_string {
 
 =podmd
+#### Deparsing the query string
 
 The query string is deparsed into a hash reference, in the "$query" object,
 with the conventions of:
@@ -138,24 +139,23 @@ have to be addressed as (first) array element.
 
 sub convert_api_request {
 
-=pod
+=podmd
 
 =cut
 
   my $query     =   shift;
 
   # TODO: in yaml?
-  my @request    =    grep{ /\w/ } split('/', $ENV{REQUEST_URI});
+  my @request   =    grep{ /\w/ } split('/', $ENV{REQUEST_URI});
 
   if ($request[0] ne 'api') { return $query }
 
   shift @request;  # remove the api part
   foreach (@{$query->{config}->{api_mappings}}) {
-    $query->{param}->{ $_->{paramkey} }  =     [ $_->{default} ];
-    if ($request[0] =~ /^\?/i)   { last }
-    if ($request[0] !~ /\w/i)   {  last }
-    $query->{param}->{ $_->{paramkey} }  =  [ split(',', shift @request) ];
-
+    $query->{param}->{ $_->{paramkey} } =     [ $_->{default} ];
+    if ($request[0] =~ /^\?/i)  { last }
+    if ($request[0] !~ /\w/i)   { last }
+    $query->{param}->{ $_->{paramkey} } =  [ split(',', shift @request) ];
   }
 
   return $query;
@@ -188,6 +188,31 @@ sub scope_filters {
 
 sub map_scoped_params {
 
+=podmd
+#### Matching parameters to their scopes
+
+In the configuration file, the root attribute `scopes` contains the definitions
+of the different "scopes" (essentially the different data collections) and which
+query parameters can be applied to them. These definitions also define
+
+* `alias` values
+    - allowing to use different names for the parameter e.g. in forms (avoiding
+    dot annotation problems)
+* `paramkey`
+    - the fully expanded database attribute, including the collection name
+        * `publications.provenance.geo.city`
+* `dbkey`
+    - the attribute, w/o prepended collection
+
+Foreach of the scopes, the pre-defined _possible_ parameters are evaluated for
+corresponding values in the object generated from parsing the query string. If
+matching values are found those are added to the pre-formatted query parameter
+object for the corresponding scope. Those scoped parameter objects will then be
+processed depending on the type of query (e.g. "variants" queries have a
+different processing compared to "biosamples" queries; see below).
+
+=cut
+
   my $query     =   shift;
 
   foreach my $scope (keys %{ $query->{config}->{scopes} }) {
@@ -203,8 +228,9 @@ sub map_scoped_params {
           if ($val =~ /./) {
             if ($val =~ /$thisP->{$q_param}->{pattern}/) {
               if ($thisP->{$q_param}->{type} =~ /array/i) {
-                push(@{ $query->{parameters}->{$scope}->{$dbK} }, $val);
-              }
+              	if (! grep{ $val } @{ $query->{parameters}->{$scope}->{$dbK} }) {
+                	push(@{ $query->{parameters}->{$scope}->{$dbK} }, $val)
+              }}
               else {
                 $query->{parameters}->{$scope}->{$dbK}  =   $val;
   }}}}}}}
@@ -432,10 +458,10 @@ sub create_subsets_queries {
         foreach (@{ $query->{parameters}->{$scope}->{$qKey} }) { push(@thisQlist, { $qKey => qr/^$_/i }) } }
       else {
 
-        my $val  =  $query->{parameters}->{$scope}->{$qKey};
+        my $val =  $query->{parameters}->{$scope}->{$qKey};
 
         if ($val =~ /^(<|>\=?)(\d+?(\.\d+?)?)$/) {
-          my ($rel, $num)  =    ($1, 1 * $2);
+          my ($rel, $num) 	=    ($1, 1 * $2);
           if ($rel eq '>') {
             push(@thisQlist, { $qKey => { '$gt' => $num } } ) }
           if ($rel eq '<') {

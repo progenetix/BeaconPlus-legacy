@@ -27,6 +27,7 @@ the Progenetix Beacon environment to access data collections
 
 ... which are used to provide pre-computed, aggregate from e.g. all samples
 belonging to a single publication or representing a specific diagnostic code.
+
 =cut
 
   my $class     =   shift;
@@ -37,7 +38,6 @@ belonging to a single publication or representing a specific diagnostic code.
     config      =>  $config,
     dataset			=>	$dataset,
     queries			=>	$config->{queries},
-  #  scopes      =>  $config->{scopes},
     db_conn			=>	MongoDB::MongoClient->new()->get_database( $dataset ),
     handover_coll   =>   MongoDB::MongoClient->new()->get_database( $config->{handover_db} )->get_collection( $config->{handover_coll} ),
   };
