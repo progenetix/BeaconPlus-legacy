@@ -2,6 +2,6 @@
 
 This is a Perl-based server implementation to test the Beacon protocol(s).
 
-While this could be the basis for a [fully functional Beacon installation/](http://beacon.progenetix.org/ui/) (w/o authentication, but added features from the roadmap).
+While this could be the basis for a [fully functional Beacon installation/](http://beacon.progenetix.org/ui/) (w/o authentication, but added features from the roadmap) it is mostly for archiving/documentation purposes.
 
 If you're interested in a deployment, please contact @mbaudis for more information (e.g. MongoDB setup, example data ...).
