@@ -6,11 +6,11 @@ use YAML::XS qw(LoadFile);
 use BeaconPlus::QueryParameters;
 
 require Exporter;
-@ISA    =   qw(Exporter);
-@EXPORT =   qw(
-  new
-  RandArr
-  _dw
+@ISA            =   qw(Exporter);
+@EXPORT         =   qw(
+	new
+	RandArr
+	_dw
 );
 
 sub new {
@@ -41,19 +41,25 @@ Objects accessible through `$config`
   my $self      =   LoadFile(File::Basename::dirname( eval { ( caller() )[1] } ).'/config/config.yaml') or die print 'Content-type: text'."\n\n¡No config.yaml file in this path!";
   bless $self, $class;
 
-  my $query			=		BeaconPlus::QueryParameters->new();
+  if ($ENV{SERVER_NAME} =~ /\.test$|\//) { $self->{url_base} =~  s/\.org/.test/ }
+  my $query		=		BeaconPlus::QueryParameters->new();
+  
+  my $ho		=	LoadFile(File::Basename::dirname( eval { ( caller() )[1] } ).'/config/handover_types.yaml') or die print 'Content-type: text'."\n\n¡No handover_types.yaml file in this path!";
+  $self->{handover_types}	=	$ho->{handover_types};
 
- if ($ENV{SERVER_NAME} =~ /\.test$|\//) { $self->{url_base} =~  s/\.org/.test/ }
-  # $self->{query}		=		$query;
-  $self->{param}		=		$query->{param};
-  $self->{queries}	=		$query->{queries};
-  $self->{filters}  =   $query->{filters};
-#  $self->{scopes}   =   $query->{config}->{scopes};
+  my $ds		=	LoadFile(File::Basename::dirname( eval { ( caller() )[1] } ).'/config/datasets.yaml') or die print 'Content-type: text'."\n\n¡No datasets.yaml file in this path!";
+  $self->{datasets}		=	$ds->{datasets};
+
+  $self->{q_conf}		=	$query->{config};
+  $self->{param}		=	$query->{param};
+  $self->{queries}		=	$query->{queries};
+  $self->{filters}  	=   $query->{filters};
   $self->{api_methods}  =   $query->{config}->{api_methods};
-  $self->{query_errors}	=		$query->{query_errors};
-  $self->{cgi}			=		$query->{cgi};
+  $self->{query_errors}	=	$query->{query_errors};
+  $self->{cgi}			=	$query->{cgi};
+  $self->{debug}		=	$query->{debug};
 
-  $self->_select_dataset_from_param();
+  $self->_select_datasets_from_param();
 
   return $self;
 
@@ -61,14 +67,24 @@ Objects accessible through `$config`
 
 ################################################################################
 
-sub _select_dataset_from_param {
+sub _select_datasets_from_param {
 
 	my $config		=		shift;
 
 	$config->{dataset_names}	=		[ map{ $_->{id} } @{ $config->{datasets} } ];
 
-	if (! grep{ /.../ } @{ $config->{param}->{datasetIds} } ) { return $config }
+  ##############################################################################
+  
+  my %dsParams  =   map{ $_ => 1 } @{ $config->{param}->{datasetIds} }, @{ $config->{param}->{apidb} };
 
+	if (! grep{ /.../ } keys %dsParams ) { return $config }
+
+=podmd
+
+Only datasets from the query are used if specified as "datasetIds".
+
+=cut
+  
 	my @datasets;
 	foreach my $qds (@{ $config->{param}->{datasetIds} }) {
 		if (grep{ $qds eq $_ } @{ $config->{dataset_names} }) {

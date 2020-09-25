@@ -13,6 +13,7 @@ use MongoDB;
 use MongoDB::MongoClient;
 $MongoDB::Cursor::timeout = 36000;
 
+BEGIN { unshift @INC, '.' };
 use BeaconPlus::ConfigLoader;
 use BeaconPlus::QueryParameters;
 use BeaconPlus::QueryExecution;

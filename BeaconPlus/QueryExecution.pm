@@ -3,6 +3,7 @@ package BeaconPlus::QueryExecution;
 use Data::Dumper;
 use UUID::Tiny;
 use BeaconPlus::ConfigLoader;
+use MongoDB::MongoClient;
 
 require Exporter;
 @ISA    =   qw(Exporter);
@@ -47,16 +48,16 @@ At each stage a match value < 1 will lead to exit from the query.
 
 =cut
 
-  my $class     =   shift;
-  my $config    =   shift;
-  my $dataset   =   shift;
+  my $class = shift;
+  my $config = shift;
+  my $dataset = shift;
 
-  my $self      =   {
-    dataset			=>	$dataset,
-    queries     =>  $config->{queries},
-    filters     =>  $config->{filters},
-    db_conn			=>	MongoDB::MongoClient->new()->get_database( $dataset ),
-    handover_coll   =>   MongoDB::MongoClient->new()->get_database( $config->{handover_db} )->get_collection( $config->{handover_coll} ),
+  my $self = {
+    dataset => $dataset,
+    queries => $config->{queries},
+    db_conn => MongoDB::MongoClient->new()->get_database( $dataset ),
+    handover_coll => MongoDB::MongoClient->new()->get_database( $config->{handover_db} )->get_collection( $config->{handover_coll} ),
+    error => { error_code => 200 },
   };
 
   bless $self, $class;
@@ -68,7 +69,7 @@ At each stage a match value < 1 will lead to exit from the query.
 
 sub execute_aggregate_query {
 
-  my $prefetch  =   shift;
+  my $prefetch = shift;
 
 =podmd
 
@@ -91,7 +92,6 @@ More documentation can be found [below](#prefetch_to_scoped_query).
 
   $prefetch->prefetch_to_scoped_query();
   $prefetch->get_base_counts();
-
   if (! grep{ /../ }
     keys %{ $prefetch->{queries}->{biosamples} },
     keys %{ $prefetch->{queries}->{callsets} },
@@ -207,7 +207,7 @@ values.
 
     # just to overwrite the key with the standard 'callsets::id' results
     $prefetch->{handover}->{'callsets::id'}->{target_values}  =   $prefetch->{handover}->{$thisM}->{target_values};
-    $prefetch->{handover}->{'callsets::id'}->{target_count}  =   $prefetch->{handover}->{$thisM}->{target_count};
+    $prefetch->{handover}->{'callsets::id'}->{target_count}   =   $prefetch->{handover}->{$thisM}->{target_count};
 
     # getting the distinct variants
     $thisQ      =   { '_id' => { '$in' => $prefetch->{handover}->{'variants::_id'}->{target_values} } };
@@ -234,6 +234,14 @@ corresponding biosample pointers using `biosamples::_id`
 and store the corresponding pointers using `callsets::_id`
 
 =cut
+
+	if ($prefetch->{queries}->{filters}->{randno} > 0) {
+    $prefetch->{handover}->{'callsets::id'}->{target_values}	=  	BeaconPlus::ConfigLoader::RandArr(
+																																		$prefetch->{handover}->{'callsets::id'}->{target_values},
+																																		$prefetch->{queries}->{filters}->{randno}
+																																	);
+  	$prefetch->{handover}->{'callsets::id'}->{target_count}		=		scalar @{ $prefetch->{handover}->{'callsets::id'}->{target_values} };
+	}
 
   $prefetch->prefetch_data(
     'callsets::biosample_id',
@@ -319,7 +327,6 @@ scenarios.
   my $prefetch  =   shift;
   my $method    =   shift;
   my $this_Q    =   shift;
-  my $filters   =   shift;
 
   my (
     $source_c,
@@ -337,10 +344,7 @@ scenarios.
                       "key"     =>  $source_k,
                       "query"   =>  $this_Q,
                     ]);
-
   my $distVals  =   $distincts->{values};
-  if ($prefetch->{filters}->{randno} > 0) {
-    $distVals   =   BeaconPlus::ConfigLoader::RandArr($distVals, $prefetch->{filters}->{randno}) }
 
   $prefetch->{handover}->{$method}  =   {
     source_db         =>  $prefetch->{dataset},
@@ -366,7 +370,7 @@ sub create_handover_object {
 The `create_handover_object` method is a wrapper for the `prefetch_data`
 function. It calls this function to execute a query and retrieve a handover
 object, and then stores this object in the handover collection for later
-retrieval by its unique (UUID v4) `_id`.
+retrieval by its unique (UUID v4) `id`.
 
 This anonymous `_id` can be safely exposed to external data retrieval systems.
 
@@ -376,9 +380,9 @@ This anonymous `_id` can be safely exposed to external data retrieval systems.
   my $this_Q    =   shift;
 
   $prefetch->prefetch_data($method, $this_Q);
-  $prefetch->{handover}->{$method}->{_id} =   create_UUID_as_string();
+  $prefetch->{handover}->{$method}->{id} =   create_UUID_as_string();
 
-  $prefetch->{handover_coll}->insert( $prefetch->{handover}->{$method} );
+  $prefetch->{handover_coll}->insert_one( $prefetch->{handover}->{$method} );
 
   return $prefetch;
 
@@ -389,8 +393,6 @@ This anonymous `_id` can be safely exposed to external data retrieval systems.
 sub get_base_counts {
 
   my $prefetch  =   shift;
-
-  $prefetch->{filters}  ||= {};
 
   $prefetch->{counts}   =   {};
   foreach (qw(callsets biosamples variants)) {
@@ -406,7 +408,8 @@ sub prefetch_to_scoped_query {
 
 =podmd
 
-#### <a id="prefetch_to_scoped_query"></a>Extracting pre-selected items from a handover query
+<h4><a id="prefetch_to_scoped_query"></a>Extracting pre-selected items from a
+handover query</h4>
 
 Handover objects are generally used to retrieve documents based on their stored
 `_id` (or other key) values.

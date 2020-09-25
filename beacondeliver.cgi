@@ -15,6 +15,7 @@ $MongoDB::Cursor::timeout = 120000;
 use Data::Dumper;
 
 # local packages
+BEGIN { unshift @INC, '.' };
 use BeaconPlus::ConfigLoader;
 use BeaconPlus::QueryParameters;
 use BeaconPlus::QueryExecution;
@@ -29,7 +30,7 @@ __h-&gt;o__ functionality to the _BeaconPlus_ environment.
 The script accepts following parameters:
 
 * `accessid`
-    - the `_id` of an entry in the `___handover_db___.___handover_coll___` 
+    - the `id` of an entry in the `___handover_db___.___handover_coll___` 
     database, which in the standard implementation stores pointers to the 
     results from a _BeaconPlus_ query
 * `do`
@@ -42,17 +43,16 @@ The script accepts following parameters:
 =cut
 
 my $config      =   BeaconPlus::ConfigLoader->new();
-my $error				=		q{};
-our $handover		=		{};
+my $error		=	q{};
+our $handover	=	{};
 my $pretty     	=   $config->{param}->{jsonpretty}->[0];
 if ($pretty !~ /^1|y|pretty/) {
   $pretty       =   0 }
 else {
   $pretty       =   1 }
 
-
 if (! grep{ /../ } keys %{ $config->{queries}->{handover} }) { 
-  $error				= '¡ Wrong or missing access_id parameter !' }
+  $error				= '¡ Wrong or missing accessid parameter !' }
 
 if (! grep{ $config->{param}->{do}->[0] eq $_ } keys %{ $config->{handover_types} }) { 
   $error				= '¡ Wrong or missing "do" parameter !' }
@@ -60,7 +60,7 @@ if (! grep{ $config->{param}->{do}->[0] eq $_ } keys %{ $config->{handover_types
 if ($error  !~  /\w/) {
 	$handover 		=    MongoDB::MongoClient->new()->get_database( $config->{handover_db} )->get_collection( $config->{handover_coll} )->find_one( $config->{queries}->{handover} ) }
 
-if (! $handover->{_id} ) { 
+if (! $handover->{id} ) { 
   $error				= '¡ No handover object found !' }
 
 
@@ -84,13 +84,15 @@ exit;
 sub _print_histogram {
 
   if ($config->{param}->{do}->[0] !~ /histo/i) { return }
-
-  $config->{param}->{-plotid}		=		'histoplot';
-  $config->{param}->{-text_bottom_left} 	=  $handover->{source_db}.': '.$handover->{target_count}.' samples';
   
-  my $pgx       =   new PGX($config->{param});
+  my $plotargs    =   { map{ $_ => join(',', @{ $config->{param}->{$_} }) } (grep{ /^\-\w+?$/ } keys %{ $config->{param} }) };
+  $plotargs->{-plotid}	=	'histoplot';
+  $plotargs->{'-plottype'}  =   'histogram';
+  $plotargs->{-text_bottom_left} =  $handover->{source_db}.': '.$handover->{target_count}.' samples';
+  
+  my $pgx       =   new PGX($plotargs);
   $pgx->pgx_open_handover($config, $config->{param}->{accessid}->[0]);
-	$pgx->pgx_samples_from_handover();
+  $pgx->pgx_samples_from_handover();
   $pgx->pgx_add_frequencymaps( [ { statusmapsets =>  $pgx->{samples} } ] );
   $pgx->return_histoplot_svg();
 
@@ -154,7 +156,7 @@ sub _export_biosamples_individuals {
   my $dataconn  =   MongoDB::MongoClient->new()->get_database( $handover->{source_db} );
 
   my $datacoll  =   $dataconn->get_collection($handover->{target_collection});
-  my $cursor	  =		$datacoll->find( { $handover->{target_key} => { '$in' => $handover->{target_values} } } )->fields( { attributes => 0, _id => 0, updated => 0, created => 0 } );
+  my $cursor	=	$datacoll->find( { $handover->{target_key} => { '$in' => $handover->{target_values} } } )->fields( { attributes => 0, _id => 0, updated => 0, created => 0 } );
 
   print	JSON::XS->new->pretty( $pretty )->allow_blessed->convert_blessed->encode([$cursor->all]);
   exit;
@@ -203,14 +205,19 @@ sub _display_variants_in_UCSC {
   use BeaconPlus::DataExporter;
 
   if ($config->{param}->{do}->[0] !~ /ucsc/i) { return }
-
-  write_variants_bedfile($config, $handover);
   
-  my $ucscPos =   'chr'.$config->{param}->{ucscChro}->[0].':'.$config->{param}->{ucscStart}->[0];
-  if ($config->{param}->{ucscEnd}->[0] >= $config->{param}->{ucscStart}->[0]) {
-    $ucscPos  .=  '-'. $config->{param}->{ucscEnd}->[0] }
+  my $ucscPos;
+  
+  if ( $config->{param}->{position}->[0] =~ /chr\w\w?\:\d+?\-\d+?/ ) {
+  	$ucscPos	=	$config->{param}->{position}->[0] }
+  else {
+	$ucscPos 	=   'chr'.$config->{param}->{ucscChro}->[0].':'.$config->{param}->{ucscStart}->[0];
+  	if ($config->{param}->{ucscEnd}->[0] >= $config->{param}->{ucscStart}->[0]) {
+    	$ucscPos  .=  '-'. $config->{param}->{ucscEnd}->[0] }
+    write_variants_bedfile($config, $handover); # since if "position" then already there
+  }
 
-  my $UCSCurl =   'http://genome.ucsc.edu/cgi-bin/hgTracks?ignoreCookie=1&org=human&db=hg38&position='.$ucscPos.'&hgt.customText='.$config->{url_base}.'/tmp/'.$handover->{_id}.'.bed';
+  my $UCSCurl =   'http://genome.ucsc.edu/cgi-bin/hgTracks?ignoreCookie=1&org=human&db=hg38&position='.$ucscPos.'&hgt.customText='.$config->{url_base}.'/tmp/'.$handover->{id}.'.bed';
 
   print '<html>
 <meta http-equiv="refresh" content="0; url='.$UCSCurl.'" />

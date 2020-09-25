@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# © 2000-2019 Michael Baudis: m@baud.is
+# © 2000-2020 Michael Baudis: m@baud.is
 
 use strict;
 use CGI::Carp qw(fatalsToBrowser);
@@ -12,6 +12,7 @@ use MongoDB;
 use MongoDB::MongoClient;
 use Data::Dumper;
 
+BEGIN { unshift @INC, '.' };
 use BeaconPlus::ConfigLoader;
 
 =podmd
@@ -47,8 +48,8 @@ including variant counts is returned.
 =cut
 
 my $dbClient    =   MongoDB::MongoClient->new();
-my $cursor			=		$dbClient->get_database( 'progenetix' )->get_collection('dbstats')->find()->sort({_id => -1})->limit(1);
-my $stats				=		($cursor->all)[0];
+my $cursor		=	$dbClient->get_database( 'progenetix' )->get_collection('dbstats')->find()->sort({_id => -1})->limit(1);
+my $stats		=	($cursor->all)[0];
 
 my $beaconInfo	=		$config->{service_info};
 foreach (qw(id name apiVersion version description welcomeUrl alternativeUrl createDateTime updateDateTime organization sampleAlleleRequests)) {
@@ -57,15 +58,15 @@ foreach (qw(id name apiVersion version description welcomeUrl alternativeUrl cre
 
 foreach my $dataset ( @{ $config->{ datasets }}) {
 
-	my $counts		=		{
-		callCount				=>	$stats->{$dataset->{id}.'__variants'}->{count},
-		variantCount		=>	$stats->{$dataset->{id}.'__variants'}->{distincts_count_digest},
-		sampleCount			=>	$stats->{$dataset->{id}.'__biosamples'}->{count},
+	my $counts	=		{
+		callCount		=>	$stats->{$dataset->{id}.'__variants'}->{count},
+		variantCount	=>	$stats->{$dataset->{id}.'__variants'}->{distincts_count_digest},
+		sampleCount		=>	$stats->{$dataset->{id}.'__biosamples'}->{count},
 	};
 
   if (grep{ $counts->{$_} > 0 } keys %$counts) {
 
-    my $dbconn    =   $dbClient->get_database( $dataset->{id} );
+    my $dbconn  =   $dbClient->get_database( $dataset->{id} );
 
     foreach (sort keys %$counts) {
       if ($counts->{$_} >	0) {

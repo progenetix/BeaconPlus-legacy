@@ -1,4 +1,7 @@
 ---
+# podmd
+# 
+# ```
 description: |
   This file provides configurations for Beacon query related parameters.
   Parameters are part of different "scopes", which refer to specific (logical
@@ -6,6 +9,10 @@ description: |
   The "alias" parameters provide alternative spellings to the parameter names;
   this can be helpful when e.g. using dot-annotation which may clash with
   interpolations.
+# ```
+# #### API URL structure
+# The different parameters are extracted from the ordered URL path elements.
+# ```
 api_mappings:
   - paramkey: apidb
     default: progenetix
@@ -17,6 +24,22 @@ api_mappings:
     default: ""
   - paramkey: apioutput
     default: json
+# ```
+# #### API Shortcuts
+# 
+# Shortcuts are used to simplify access to methods with canonical databases
+# and/or collections. They are expanded from `/api/___shortcutKey___/` to the 
+# associated value.
+# ```
+api_shortcuts:
+  ncitcodes: '/api/progenetix/icdmaps/ncitcodes/'
+  equivalents: '/api/progenetix/icdmaps/equivalents/'
+  publicationdata:  '/api/progenetix/publications/publicationdata/'
+  publicationdetails:  '/api/progenetix/publications/publicationdetails/'
+  technologycounts:  '/api/progenetix/publications/technologycounts/'
+# ```
+# #### API methods and their scopes
+# ```
 api_methods:
   mappings:
     scopes:
@@ -36,106 +59,89 @@ api_methods:
       - publications
       - datacollections
       - biosubsets
-  map:
+  subsetdata:
+    scopes:
+      - biosubsets
+      - datacollections
+  geomap:
     scopes:
       - publications
-#      - biosamples
-#      - callsets
-filter_prefix_mappings:
-  icdom:
-    parameter: 'biocharacteristics.type.id'
-  icdot:
-    parameter: 'biocharacteristics.type.id'
-  ncit:
-    parameter: 'biocharacteristics.type.id'
-  HPO:
-    parameter: 'biocharacteristics.type.id'
-  pubmed:
-    parameter: 'external_references.type.id'
-  geo:
-    parameter: 'external_references.type.id'
-  snmi:
-    parameter: 'external_references.type.id'
-  cellosaurus:
-    parameter: 'external_references.type.id'
-  tcga:
-    parameter: 'external_references.type.id'
-  EFO:
-    parameter: 'provenance.material.type.id'
-  city:
-    parameter: 'provenance.geo.city'
-    remove_prefix: true
-  country:
-    parameter: 'provenance.geo.country'
-    remove_prefix: true
-  wes:
-    parameter: 'counts.wes'
-    remove_prefix: true
-  wgs:
-    parameter: 'counts.wgs'
-    remove_prefix: true
-  ccgh:
-    parameter: 'counts.ccgh'
-    remove_prefix: true
-  acgh:
-    parameter: 'counts.acgh'
-    remove_prefix: true
-  genomes:
-    parameter: 'counts.genomes'
-    remove_prefix: true
-  ngs:
-    parameter: 'counts.ngs'
-    remove_prefix: true
-  pgxsamples:
-    parameter: 'info.progenetix_biosamples_count'
-    remove_prefix: true
-  amsamples:
-    parameter: 'info.arraymap_biosamples_count'
-    remove_prefix: true
+      - biosamples
+      - callsets
+  sampledetails:
+    scopes:
+      - biosamples
+  count:
+    scopes:
+      - biosamples
+      - publications
+      - icdmaps
+      - biosubsets
+      - datacollections
+  equivalents:
+    scopes:
+      - icdmaps
+  ncitcodes:
+    scopes:
+      - icdmaps
+  statusmaps:
+    scopes:
+      - callsets
+  valuemaps:
+    scopes:
+      - callsets
+# ```
+# end_podmd   
 scopes:
   variants:
     scope: variants
     parameters:
+      assemblyId:
+        dbkey: assembly_id
+        alias:
+          - assembly_id
+        pattern: '^\w+?[\w\-]*?\w*?$' # for 2019-nCoV
       referenceName:
         paramkey: 'variants.reference_name'
         dbkey: reference_name
         alias:
           - reference_name
-        pattern: '^\w+?$'
+#        pattern: '^([1-9]|1\d|2[0-4]|[XY]|MT)$'
+        pattern: '^\w+?[\w\-]*?\w*?$' # for 2019-nCoV
       mateName:
         paramkey: 'variants.mate_name'
         dbkey: mate_name
         alias:
           - mate_name
-        pattern: '^\w+?$'
+        pattern: '^([1-9]|1\d|2[0-4]|[XY]|MT)$'
       referenceBases:
         paramkey: 'variants.reference_bases'
         dbkey: reference_bases
         alias:
           - reference_bases
-        pattern: '^[\w\*]+?$'
+        pattern: '^[ACGTN]+$'
       alternateBases:
         paramkey: 'variants.alternate_bases'
         dbkey: alternate_bases
         alias:
           - alternate_bases
-        pattern: '^\w+?$'
+        pattern: '^[ACGTN]+$'
       variantType:
         paramkey: 'variants.variant_type'
         dbkey: variant_type
         alias:
           - variant_type
-        pattern: '^\w+?$'
+        pattern: '^(DUP|DEL|BND|INS|INV|CNV|INDEL|SNP|SNV)$'
       start:
-        paramkey: 'variants.start'
-        dbkey: start
+        paramkey: 'variants.start_min'
+        dbkey: start_min
         alias:
           - start
         pattern: '^\d+?$'
         type: integer
       end:
-        paramkey: 'variants.end'
-        dbkey: end
+        paramkey: 'variants.end_max'
+        dbkey: end_max
         alias:
           - end
         pattern: '^\d+?$'
@@ -180,6 +186,14 @@ scopes:
           - 'id'
         pattern: '^.+?\w+?.+?$'
         type: array
+      biosampleid:
+        paramkey: 'callsets.biosampleid'
+        dbkey: 'biosampleid'
+        alias:
+          - 'callsets-biosampleid'
+          - 'biosampleid'
+        pattern: '^.+?\w+?.+?$'
+        type: array
 
   biosamples:
     scope: biosamples
@@ -199,7 +213,7 @@ scopes:
           - 'biosamples-biocharacteristics-type-id'
           - 'biocharacteristics.type.id'
           - 'biocharacteristics-type-id'
-        pattern: '^(\w+[\:\-$])?\w*?\d(?:[\w\-\.]+?)?'
+        pattern: '^(\w+[\:\-$])?[\dC]*?(?:[\w\-\.]+?)?'
         type: array
       external_references.type.id:
         paramkey: 'biosamples.external_references.type.id'
@@ -228,6 +242,27 @@ scopes:
           - 'provenance-geo-city'
         pattern: '^\w+[\w\- ]+?$'
         type: array
+      geolat:
+        paramkey: 'provenance.geo.geojson.lat'
+        dbkey: 'provenance.geo.geojson.lat'
+        alias:
+          - 'provenance-geo-geojson-lat'
+        pattern: '^\-?\d+?(\.\d+?)?$'
+        type: float
+      geolong:
+        paramkey: 'provenance.geo.geojson.long'
+        dbkey: 'provenance.geo.geojson.long'
+        alias:
+          - 'provenance-geo-geojson-long'
+        pattern: '^\-?\d+?(\.\d+?)?$'
+        type: float
+      geodist:
+        paramkey: 'provenance.geo.geojson.maxdist'
+        dbkey: 'provenance.geo.geojson.maxdist'
+        alias:
+          - 'provenance-geo-geojson-maxdist'
+        pattern: '^\d+?$'
+        type: integer
 
   biosubsets:
     scope: biosubsets
@@ -288,6 +323,27 @@ scopes:
         alias: []
         pattern: '^\w+[\w\- ]+?$'
         type: array
+      geolat:
+        paramkey: 'provenance.geo.geojson.lat'
+        dbkey: 'provenance.geo.geojson.lat'
+        alias:
+          - 'provenance-geo-geojson-lat'
+        pattern: '^\-?\d+?(\.\d+?)?$'
+        type: float
+      geolong:
+        paramkey: 'provenance.geo.geojson.long'
+        dbkey: 'provenance.geo.geojson.long'
+        alias:
+          - 'provenance-geo-geojson-long'
+        pattern: '^\-?\d+?(\.\d+?)?$'
+        type: float
+      geodist:
+        paramkey: 'provenance.geo.geojson.maxdist'
+        dbkey: 'provenance.geo.geojson.maxdist'
+        alias:
+          - 'provenance-geo-geojson-maxdist'
+        pattern: '^\d+?$'
+        type: integer
       cccghcount:
         paramkey: 'publications.counts.ccgh'
         dbkey: 'counts.ccgh'
@@ -314,6 +370,7 @@ scopes:
       ngscount:
         paramkey: 'publications.counts.ngs'
         dbkey: 'counts.ngs'
+        alias: []
         pattern: '^(?:ngs(?:[\:\-])?)?[><]?\d*?$'
         type: string
       genomescount:
@@ -340,7 +397,7 @@ scopes:
     parameters:
       accessid:
         paramkey: 'accessid'
-        dbkey: '_id'
+        dbkey: 'id'
         pattern: '^\w[\w\-]+?\w$'
         type: string
 
