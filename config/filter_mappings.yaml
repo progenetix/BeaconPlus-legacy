@@ -1,0 +1,111 @@
+---
+# podmd
+# 
+# ```
+description: |
+  The `filter_mappings.yaml` file provides a way to scope prefixed query
+  values collected in the single `filters` parameter introduced for Beacon v2,
+  to specific attributes in the local middleware/backend.
+parameters:
+# ```
+# #### `biocharacteristics`
+# ```
+  icdom:
+    parameter: 'biocharacteristics.type.id'
+    examples:
+      - 'icdom-81703'
+      - 'icdom-94403'
+  icdot:
+    parameter: 'biocharacteristics.type.id'
+    examples:
+      - 'icdot-C04.9'
+      - 'icdot-C42.4'
+  NCIT:
+    parameter: 'biocharacteristics.type.id'
+    examples:
+      - 'NCIT:C27676'
+      - 'NCIT:C9325'
+  HPO:
+    parameter: 'biocharacteristics.type.id'
+    examples:
+      - 'HP:0012209'
+# ```
+# #### `external_references`
+# ```
+  PMID:
+    parameter: 'external_references.type.id'
+    examples:
+      - 'PMID:28966033'
+      - 'PMID:9405679'
+  geogse:
+    parameter: 'external_references.type.id'
+  geogsm:
+    parameter: 'external_references.type.id'
+  geogpl:
+    parameter: 'external_references.type.id'
+  snmi:
+    parameter: 'external_references.type.id'
+  cellosaurus:
+    parameter: 'external_references.type.id'
+  tcga:
+    parameter: 'external_references.type.id'
+# ```
+# #### `provenance`
+# ```
+  EFO:
+    parameter: 'provenance.material.type.id'
+  city:
+    parameter: 'provenance.geo.city'
+    remove_prefix: true
+  country:
+    parameter: 'provenance.geo.country'
+    remove_prefix: true
+  geolat:
+    parameter: 'provenance.geo.geojson.lat'
+    remove_prefix: true
+  geolong:
+    parameter: 'provenance.geo.geojson.long'
+    remove_prefix: true
+  geodist:
+    parameter: 'provenance.geo.geojson.maxdist'
+    remove_prefix: true
+# ```
+# #### `counts`
+# ```
+  wes:
+    parameter: 'counts.wes'
+    remove_prefix: true
+  wgs:
+    parameter: 'counts.wgs'
+    remove_prefix: true
+  ccgh:
+    parameter: 'counts.ccgh'
+    remove_prefix: true
+  acgh:
+    parameter: 'counts.acgh'
+    remove_prefix: true
+  genomes:
+    parameter: 'counts.genomes'
+    remove_prefix: true
+    examples:
+      - 'genomes:>0'
+  ngs:
+    parameter: 'counts.ngs'
+    remove_prefix: true
+# ```
+# #### Etc.
+# ```
+  pgxsamples:
+    parameter: 'info.progenetix_biosamples_count'
+    remove_prefix: true
+  amsamples:
+    parameter: 'info.arraymap_biosamples_count'
+    remove_prefix: true
+  biosampleid:
+    parameter: 'biosamples.id'
+    remove_prefix: true
+  callsetid:
+    parameter: 'callsets.id'
+    remove_prefix: true
+# ```
+# end_podmd   
